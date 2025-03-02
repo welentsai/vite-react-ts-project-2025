@@ -1,6 +1,3 @@
-// import { useState } from 'react';
-// import reactLogo from './assets/react.svg';
-// import viteLogo from '/vite.svg';
 import './App.css';
 
 const list = [
@@ -21,17 +18,6 @@ const list = [
     objectID: 1,
   },
 ];
-
-const a = ['a', 'b', 'c', 'd', 'e'];
-
-const welcome = {
-  greeting: 'Hey',
-  title: 'React',
-};
-
-function getTitle(title: string) {
-  return title;
-}
 
 function App() {
   // const [count, setCount] = useState(0);
