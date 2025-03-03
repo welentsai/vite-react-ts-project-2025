@@ -32,35 +32,42 @@ const App = () => {
     },
   ];
 
+  const [searchItem, setSearchItem] = React.useState('');
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // console.log('App component', 'handleChange', event.target.value);
+    setSearchItem(event.target.value);
+  };
+
+  const searchedStories = stories.filter(story =>
+    story.title.toLowerCase().includes(searchItem.toLowerCase())
+  );
+
   return (
     <div>
       <h1>My Hacker Stories</h1>
 
-      <Search />
+      <Search onSearch={handleChange} searchItem={searchItem} />
 
       <hr />
 
-      <List list={stories} />
+      <List list={searchedStories} />
     </div>
   );
 };
 
-const Search = () => {
+type SearchProps = {
+  onSearch: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  searchItem: string;
+};
+
+const Search = ({ onSearch, searchItem }: SearchProps) => {
   console.log('Search renders...');
-
-  // perform a task in between
-  const [searchItem, setSearchItem] = React.useState('');
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // console.log(event);
-    // console.log(event.target.value);
-    setSearchItem(event.target.value);
-  };
 
   return (
     <div>
       <label htmlFor="Search">Search: </label>
-      <input type="text" id="Search" onChange={handleChange} />
+      <input type="text" id="Search" onChange={onSearch} />
       <p>
         Searching for <strong>{searchItem}</strong>.
       </p>
