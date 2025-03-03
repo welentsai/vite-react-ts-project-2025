@@ -2,12 +2,12 @@ import * as React from 'react';
 import './App.css';
 
 type Story = {
-  title: string;
+  objectID: number;
   url: string;
+  title: string;
   author: string;
   num_comments: number;
   points: number;
-  objectID: number;
 };
 
 const App = () => {
@@ -32,7 +32,7 @@ const App = () => {
     },
   ];
 
-  const [searchItem, setSearchItem] = React.useState('');
+  const [searchItem, setSearchItem] = React.useState('React');
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // console.log('App component', 'handleChange', event.target.value);
@@ -57,8 +57,8 @@ const App = () => {
 };
 
 type SearchProps = {
-  onSearch: (event: React.ChangeEvent<HTMLInputElement>) => void;
   searchItem: string;
+  onSearch: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 const Search = ({ onSearch, searchItem }: SearchProps) => {
@@ -67,7 +67,7 @@ const Search = ({ onSearch, searchItem }: SearchProps) => {
   return (
     <div>
       <label htmlFor="Search">Search: </label>
-      <input type="text" id="Search" onChange={onSearch} />
+      <input id="Search" type="text" value={searchItem} onChange={onSearch} />
       <p>
         Searching for <strong>{searchItem}</strong>.
       </p>
@@ -76,7 +76,7 @@ const Search = ({ onSearch, searchItem }: SearchProps) => {
 };
 
 type ListProps = {
-  list: Story[];
+  list: Array<Story>;
 };
 
 const List = ({ list }: ListProps) => {
