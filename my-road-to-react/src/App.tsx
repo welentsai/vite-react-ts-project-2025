@@ -1,4 +1,4 @@
-import { ChangeEvent } from 'react';
+import * as React from 'react';
 import './App.css';
 
 type Story = {
@@ -11,6 +11,8 @@ type Story = {
 };
 
 const App = () => {
+  console.log('App renders...');
+
   const stories: Array<Story> = [
     {
       title: 'React',
@@ -44,16 +46,24 @@ const App = () => {
 };
 
 const Search = () => {
+  console.log('Search renders...');
+
   // perform a task in between
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    console.log(event);
-    console.log(event.target.value);
+  const [searchItem, setSearchItem] = React.useState('');
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // console.log(event);
+    // console.log(event.target.value);
+    setSearchItem(event.target.value);
   };
 
   return (
     <div>
       <label htmlFor="Search">Search: </label>
       <input type="text" id="Search" onChange={handleChange} />
+      <p>
+        Searching for <strong>{searchItem}</strong>.
+      </p>
     </div>
   );
 };
@@ -62,13 +72,17 @@ type ListProps = {
   list: Story[];
 };
 
-const List = ({ list }: ListProps) => (
-  <ul>
-    {list.map(item => (
-      <Item key={item.objectID} item={item} />
-    ))}
-  </ul>
-);
+const List = ({ list }: ListProps) => {
+  console.log('List renders...');
+
+  return (
+    <ul>
+      {list.map(item => (
+        <Item key={item.objectID} item={item} />
+      ))}
+    </ul>
+  );
+};
 
 type ItemProps = {
   item: Story;
