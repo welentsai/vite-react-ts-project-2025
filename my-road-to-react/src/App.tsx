@@ -1,3 +1,4 @@
+import { ChangeEvent } from 'react';
 import './App.css';
 
 const list = [
@@ -33,12 +34,20 @@ const App = () => {
   );
 };
 
-const Search = () => (
-  <div>
-    <label htmlFor="Search">Search: </label>
-    <input type="text" id="Search" />
-  </div>
-);
+const Search = () => {
+  // perform a task in between
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    console.log(event);
+    console.log(event.target.value);
+  };
+
+  return (
+    <div>
+      <label htmlFor="Search">Search: </label>
+      <input type="text" id="Search" onChange={handleChange} />
+    </div>
+  );
+};
 
 const List = () => (
   <ul>
