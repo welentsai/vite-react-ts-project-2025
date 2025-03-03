@@ -19,50 +19,42 @@ const list = [
   },
 ];
 
-function App() {
-  // const [count, setCount] = useState(0);
-
-  return (
-    <>
-      <div>
-        <h1>My Hacker Stories</h1>
-
-        <Search />
-
-        <hr />
-
-        <List />
-      </div>
-    </>
-  );
-}
-
-function Search() {
+const App = () => {
   return (
     <div>
-      <label htmlFor="Search">Search: </label>
-      <input type="text" id="Search" />
+      <h1>My Hacker Stories</h1>
+
+      <Search />
+
+      <hr />
+
+      <List />
     </div>
   );
-}
+};
 
-function List() {
-  return (
-    <ul>
-      {list.map(item => (
-        // JSX to return
-        <li key={item.objectID}>
-          <span>
-            <a href={item.url}>{item.title}</a>
-          </span>
-          <span>{item.author}</span>
-          <span>{item.num_comments}</span>
-          <span>{item.points}</span>
-          {item.title}
-        </li>
-      ))}
-    </ul>
-  );
-}
+const Search = () => (
+  <div>
+    <label htmlFor="Search">Search: </label>
+    <input type="text" id="Search" />
+  </div>
+);
+
+const List = () => (
+  <ul>
+    {list.map(item => (
+      // JSX to return
+      <li key={item.objectID}>
+        <span>
+          <a href={item.url}>{item.title}</a>
+        </span>
+        <span>{item.author}</span>
+        <span>{item.num_comments}</span>
+        <span>{item.points}</span>
+        {item.title}
+      </li>
+    ))}
+  </ul>
+);
 
 export default App;
