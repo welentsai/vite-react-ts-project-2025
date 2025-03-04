@@ -32,7 +32,11 @@ const App = () => {
     },
   ];
 
-  const [searchItem, setSearchItem] = React.useState('React');
+  const [searchItem, setSearchItem] = React.useState(localStorage.getItem('search') || 'React');
+
+  React.useEffect(() => {
+    localStorage.setItem('search', searchItem);
+  }, [searchItem]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // console.log('App component', 'handleChange', event.target.value);
