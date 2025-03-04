@@ -95,15 +95,15 @@ type ItemProps = {
   item: Story;
 };
 
-const Item = ({ item }: ItemProps) => (
+const Item = ({ item: { url, title, author, num_comments, points } }: ItemProps) => (
   <li>
     <span>
-      <a href={item.url}>{item.title}</a>
+      <a href={url}>{title}</a>
     </span>
-    <span>{item.author}</span>
-    <span>{item.num_comments}</span>
-    <span>{item.points}</span>
-    {item.title}
+    <span>{author}</span>
+    <span>{num_comments}</span>
+    <span>{points}</span>
+    {title}
   </li>
 );
 
