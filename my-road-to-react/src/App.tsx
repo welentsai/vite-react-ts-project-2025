@@ -75,13 +75,13 @@ const Search = ({ onSearch, searchItem }: SearchProps) => {
   console.log('Search renders...');
 
   return (
-    <div>
+    <>
       <label htmlFor="Search">Search: </label>
       <input id="Search" type="text" value={searchItem} onChange={onSearch} />
       <p>
         Searching for <strong>{searchItem}</strong>.
       </p>
-    </div>
+    </>
   );
 };
 
