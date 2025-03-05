@@ -94,7 +94,7 @@ const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 const App = () => {
   console.log('App renders...');
 
-  const [searchItem, setSearchItem] = useStorageState(
+  const [searchTerm, setSearchTerm] = useStorageState(
     'search',
     'React'
   );
@@ -104,15 +104,12 @@ const App = () => {
     { data: [], isLoading: false, isError: false }
   );
 
-  React.useEffect(() => {
-    // if searchItem is not present
-    // e.g. null, empty string, undefined
-    // do nothing
-    if (!searchItem) return;
+  const handleFetchStories = React.useCallback(() => {
+    if (!searchTerm) return;
 
     dispatchStories({ type: 'FETCH_STORIES_INIT' });
 
-    fetch(`${API_ENDPOINT}${searchItem}`)
+    fetch(`${API_ENDPOINT}${searchTerm}`)
       .then(response => response.json())
       .then(result => {
         dispatchStories({
@@ -121,11 +118,13 @@ const App = () => {
         });
       })
       .catch(() =>
-        dispatchStories({
-          type: 'FETCH_STORIES_FAILURE',
-        })
+        dispatchStories({ type: 'FETCH_STORIES_FAILURE' })
       );
-  }, [searchItem]);
+  }, [searchTerm]);
+
+  React.useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
 
   const handleRemoveStory = (item: Story) => {
     dispatchStories({
@@ -138,7 +137,7 @@ const App = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     // console.log('App component', 'handleChange', event.target.value);
-    setSearchItem(event.target.value);
+    setSearchTerm(event.target.value);
   };
 
   return (
@@ -147,7 +146,7 @@ const App = () => {
 
       <InputWithLabel
         id="search"
-        value={searchItem}
+        value={searchTerm}
         isFocused
         onInputChange={handleSearch}
       >
