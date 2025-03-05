@@ -10,6 +10,16 @@ type Story = {
   points: number;
 };
 
+const useStorageState = (key: string, initialState: string) => {
+  const [value, setValue] = React.useState(localStorage.getItem(key) || initialState);
+
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [key, value]);
+
+  return [value, setValue] as const;
+};
+
 const App = () => {
   console.log('App renders...');
 
@@ -32,11 +42,7 @@ const App = () => {
     },
   ];
 
-  const [searchItem, setSearchItem] = React.useState(localStorage.getItem('search') || 'React');
-
-  React.useEffect(() => {
-    localStorage.setItem('search', searchItem);
-  }, [searchItem]);
+  const [searchItem, setSearchItem] = useStorageState('search', 'React');
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // console.log('App component', 'handleChange', event.target.value);
