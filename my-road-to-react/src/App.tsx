@@ -1,4 +1,5 @@
 import * as React from 'react';
+import axios from 'axios';
 import './App.css';
 
 type Story = {
@@ -113,12 +114,12 @@ const App = () => {
 
     dispatchStories({ type: 'FETCH_STORIES_INIT' });
 
-    fetch(url)
-      .then(response => response.json())
+    axios
+      .get(url)
       .then(result => {
         dispatchStories({
           type: 'FETCH_STORIES_SUCCESS',
-          payload: result.hits,
+          payload: result.data.hits,
         });
       })
       .catch(() =>
