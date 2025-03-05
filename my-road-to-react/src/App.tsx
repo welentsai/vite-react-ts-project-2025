@@ -10,42 +10,6 @@ type Story = {
   points: number;
 };
 
-const initialStories: Array<Story> = [
-  {
-    title: 'React',
-    url: 'https://reactjs.org/',
-    author: 'Jordan Walke',
-    num_comments: 3,
-    points: 4,
-    objectID: 0,
-  },
-  {
-    title: 'Redux',
-    url: 'https://redux.js.org/',
-    author: 'Dan Abramov, Andrew Clark',
-    num_comments: 2,
-    points: 5,
-    objectID: 1,
-  },
-];
-
-type StoriesResponse = {
-  data: {
-    stories: Story[];
-  };
-};
-
-// const getAsyncStories = (): Promise<StoriesResponse> =>
-//   new Promise(resolve =>
-//     setTimeout(
-//       () => resolve({ data: { stories: initialStories } }),
-//       2000
-//     )
-//   );
-
-const getAsyncStories = () =>
-  new Promise((resolve, reject) => setTimeout(reject, 2000));
-
 type StoriesState = {
   data: Story[];
   isLoading: boolean;
@@ -125,6 +89,8 @@ const useStorageState = (key: string, initialState: string) => {
   return [value, setValue] as const;
 };
 
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+
 const App = () => {
   console.log('App renders...');
 
@@ -141,11 +107,12 @@ const App = () => {
   React.useEffect(() => {
     dispatchStories({ type: 'FETCH_STORIES_INIT' });
 
-    getAsyncStories()
+    fetch(`${API_ENDPOINT}react`)
+      .then(response => response.json())
       .then(result => {
         dispatchStories({
           type: 'FETCH_STORIES_SUCCESS',
-          payload: result.data.stories,
+          payload: result.hits,
         });
       })
       .catch(() =>
