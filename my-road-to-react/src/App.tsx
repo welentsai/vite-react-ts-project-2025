@@ -57,7 +57,7 @@ const App = () => {
     <div>
       <h1>My Hacker Stories</h1>
 
-      <Search onSearch={handleChange} searchItem={searchItem} />
+      <InputWithLabel id="search" label="Search" value={searchItem} onInputChange={handleChange} />
 
       <hr />
 
@@ -66,24 +66,27 @@ const App = () => {
   );
 };
 
-type SearchProps = {
-  searchItem: string;
-  onSearch: (event: React.ChangeEvent<HTMLInputElement>) => void;
+type InputWithLabelProps = {
+  id: string;
+  label: string;
+  value: string;
+  type?: string;
+  onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-const Search = ({ onSearch, searchItem }: SearchProps) => {
-  console.log('Search renders...');
-
-  return (
-    <>
-      <label htmlFor="Search">Search: </label>
-      <input id="Search" type="text" value={searchItem} onChange={onSearch} />
-      <p>
-        Searching for <strong>{searchItem}</strong>.
-      </p>
-    </>
-  );
-};
+const InputWithLabel = ({
+  id,
+  label,
+  value,
+  type = 'text',
+  onInputChange,
+}: InputWithLabelProps) => (
+  <>
+    <label htmlFor={id}>{label}</label>
+    &nbsp;
+    <input id={id} type={type} value={value} onChange={onInputChange} />
+  </>
+);
 
 type ListProps = {
   list: Array<Story>;
