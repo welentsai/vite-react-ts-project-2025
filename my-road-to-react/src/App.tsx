@@ -36,10 +36,17 @@ type StoriesResponse = {
 };
 
 const getAsyncStories = (): Promise<StoriesResponse> =>
-  new Promise(resolve => setTimeout(() => resolve({ data: { stories: initialStories } }), 2000));
+  new Promise(resolve =>
+    setTimeout(
+      () => resolve({ data: { stories: initialStories } }),
+      2000
+    )
+  );
 
 const useStorageState = (key: string, initialState: string) => {
-  const [value, setValue] = React.useState(localStorage.getItem(key) || initialState);
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
 
   React.useEffect(() => {
     localStorage.setItem(key, value);
@@ -51,17 +58,24 @@ const useStorageState = (key: string, initialState: string) => {
 const App = () => {
   console.log('App renders...');
 
-  const [searchItem, setSearchItem] = useStorageState('search', 'React');
+  const [searchItem, setSearchItem] = useStorageState(
+    'search',
+    'React'
+  );
 
   const [stories, setStories] = React.useState<Array<Story>>([]);
 
   const handleRemoveStory = (item: Story) => {
-    const newStories = stories.filter(story => item.objectID != story.objectID);
+    const newStories = stories.filter(
+      story => item.objectID != story.objectID
+    );
 
     setStories(newStories);
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     // console.log('App component', 'handleChange', event.target.value);
     setSearchItem(event.target.value);
   };
@@ -80,7 +94,12 @@ const App = () => {
     <div>
       <h1>My Hacker Stories</h1>
 
-      <InputWithLabel id="search" value={searchItem} isFocused onInputChange={handleChange}>
+      <InputWithLabel
+        id="search"
+        value={searchItem}
+        isFocused
+        onInputChange={handleChange}
+      >
         <strong>Search:</strong>
       </InputWithLabel>
       <hr />
@@ -119,7 +138,13 @@ const InputWithLabel = ({
     <>
       <label htmlFor={id}>{children}</label>
       &nbsp;
-      <input ref={inputRef} id={id} type={type} value={value} onChange={onInputChange} />
+      <input
+        ref={inputRef}
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+      />
     </>
   );
 };
@@ -135,7 +160,11 @@ const List = ({ list, onRemoveItem }: ListProps) => {
   return (
     <ul>
       {list.map(item => (
-        <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
+        <Item
+          key={item.objectID}
+          item={item}
+          onRemoveItem={onRemoveItem}
+        />
       ))}
     </ul>
   );
