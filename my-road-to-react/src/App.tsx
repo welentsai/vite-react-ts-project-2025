@@ -124,7 +124,6 @@ const App = () => {
     } catch {
       dispatchStories({ type: 'FETCH_STORIES_FAILURE' });
     }
-
   }, [url]);
 
   React.useEffect(() => {
@@ -145,30 +144,23 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSearchSubmit = () => {
+  const handleSearchSubmit = (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     setUrl(`${API_ENDPOINT}${searchTerm}`);
+
+    event.preventDefault();
   };
 
   return (
     <div>
       <h1>My Hacker Stories</h1>
 
-      <InputWithLabel
-        id="search"
-        value={searchTerm}
-        isFocused
-        onInputChange={handleSearchInput}
-      >
-        <strong>Search:</strong>
-      </InputWithLabel>
-
-      <button
-        type="button"
-        disabled={!searchTerm}
-        onClick={handleSearchSubmit}
-      >
-        Submit
-      </button>
+      <SearchForm
+        searchTerm={searchTerm}
+        onSearchInput={handleSearchInput}
+        onSearchSubmit={handleSearchSubmit}
+      />
 
       <hr />
 
@@ -180,6 +172,35 @@ const App = () => {
         <List list={stories.data} onRemoveItem={handleRemoveStory} />
       )}
     </div>
+  );
+};
+
+type SearchFormProps = {
+  searchTerm: string;
+  onSearchInput: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onSearchSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+};
+
+const SearchForm = ({
+  searchTerm,
+  onSearchInput,
+  onSearchSubmit,
+}: SearchFormProps) => {
+  return (
+    <form onSubmit={onSearchSubmit}>
+      <InputWithLabel
+        id="search"
+        value={searchTerm}
+        isFocused
+        onInputChange={onSearchInput}
+      >
+        <strong>Search:</strong>
+      </InputWithLabel>
+
+      <button type="submit" disabled={!searchTerm}>
+        Submit
+      </button>
+    </form>
   );
 };
 
