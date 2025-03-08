@@ -1,0 +1,24 @@
+# Build outputs
+dist
+build
+
+# Dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Cache
+.cache
+.eslintcache
+
+# Environment variables
+.env
+.env.*
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# Generated files
+*.generated.*
