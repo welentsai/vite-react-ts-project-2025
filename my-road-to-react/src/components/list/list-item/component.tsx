@@ -6,10 +6,6 @@ export type ItemProps = {
 };
 
 export const Item = ({ item, onRemoveItem }: ItemProps) => {
-  // const handleRemoveItem = () => {
-  //   onRemoveItem(item);
-  // };
-
   return (
     <li>
       <span>
