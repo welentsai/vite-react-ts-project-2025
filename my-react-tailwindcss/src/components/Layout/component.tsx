@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sidebar, Sidebar2 } from '../SideBar';
+import { Content, MainContent } from '../Content';
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -9,29 +10,29 @@ export const Layout: React.FC<LayoutProps> = () => {
   const [currentSection, setCurrentSection] = React.useState('dashboard');
 
   const handleMenuSelect = (sectionId: string) => {
+    console.log('sectionId', sectionId);
     setCurrentSection(sectionId);
   };
 
   // Content components for different sections
   const renderContent = () => {
-    return <></>;
-    // switch (currentSection) {
-    //   case 'dashboard':
-    //     return <DashboardContent />;
-    //   case 'users':
-    //     return <UsersContent />;
-    //   case 'analytics':
-    //     return <AnalyticsContent />;
-    //   case 'settings':
-    //     return <SettingsContent />;
-    //   default:
-    //     return <DashboardContent />;
-    // }
+    switch (currentSection) {
+      case 'dashboard':
+        return <MainContent />;
+      case 'users':
+        return <Content />;
+      case 'analytics':
+        return <Content />;
+      case 'settings':
+        return <Content />;
+      default:
+        return <Content />;
+    }
   };
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+      {/* <Sidebar /> */}
       <Sidebar2
         activeSection={currentSection}
         onMenuSelect={handleMenuSelect}
