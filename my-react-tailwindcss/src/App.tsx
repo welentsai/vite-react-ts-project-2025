@@ -22,12 +22,12 @@ function App() {
             locations so you can enjoy some nice weather even when you're not on
             vacation.
           </p>
-          <div className="mt-4 sm:mt-6">
-            <a
-              className="inline-block rounded-lg bg-indigo-500 px-5 py-3 text-sm font-semibold tracking-wider text-white uppercase shadow-lg sm:text-base"
-              href="#"
-            >
+          <div className="mt-4 space-x-2 sm:mt-6">
+            <a className="btn" href="#">
               Book your escape
+            </a>
+            <a className="btn" href="#">
+              Learn More
             </a>
           </div>
         </div>
