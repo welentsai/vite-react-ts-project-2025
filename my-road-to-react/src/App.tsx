@@ -3,6 +3,7 @@ import axios from 'axios';
 import './App.css';
 import { List } from './components/list';
 import { SearchForm } from './components/search-form';
+import { useConfigContext } from './context/ConfigProvider';
 
 type Story = {
   objectID: number;
@@ -92,10 +93,13 @@ const useStorageState = (key: string, initialState: string) => {
   return [value, setValue] as const;
 };
 
-const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
-
 const App = () => {
   console.log('App renders...');
+  const {
+    config,
+    loading: configLoading,
+    error: configError,
+  } = useConfigContext();
 
   const [searchTerm, setSearchTerm] = useStorageState(
     'search',
@@ -103,7 +107,7 @@ const App = () => {
   );
 
   const [url, setUrl] = React.useState(
-    `${API_ENDPOINT}${searchTerm}`
+    `${config.apiUrl}${searchTerm}`
   );
 
   const [stories, dispatchStories] = React.useReducer(
@@ -117,7 +121,8 @@ const App = () => {
     dispatchStories({ type: 'FETCH_STORIES_INIT' });
 
     try {
-      const result = await axios.get(url);
+      // const config = await getConfig();
+      const result = await axios.get(config.apiUrl);
 
       dispatchStories({
         type: 'FETCH_STORIES_SUCCESS',
@@ -149,10 +154,31 @@ const App = () => {
   const handleSearchSubmit = (
     event: React.FormEvent<HTMLFormElement>
   ) => {
-    setUrl(`${API_ENDPOINT}${searchTerm}`);
+    console.log('config', config);
+    console.log('handelSubmit');
+    console.log('url', `${config?.apiUrl}${searchTerm}`);
+    setUrl(`${config.apiUrl}${searchTerm}`);
 
     event.preventDefault();
   };
+
+  // Show loading state while config is loading
+  if (configLoading) {
+    return <div>Loading application configuration...</div>;
+  }
+
+  // Show error if config couldn't be loaded
+  if (configError) {
+    return (
+      <div className="error">
+        <h2>Configuration Error</h2>
+        <p>{configError.message}</p>
+        <button onClick={() => window.location.reload()}>
+          Reload App
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>
