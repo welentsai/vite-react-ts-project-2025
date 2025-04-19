@@ -1,12 +1,18 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './global.css';
-import App from './App.tsx';
-import { Layout } from './components/Layout';
+import { AppTwo } from '@/components/AppTwo';
+// import App from './App.tsx';
+// import { Layout } from './components/Layout';
+
+// Import AG Grid styles
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-alpine.css'
+
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AppTwo />
     {/* <Layout>
       <div className="rounded-lg bg-white p-6 shadow-md">
         <h2 className="mb-4 text-2xl font-semibold text-gray-800">
