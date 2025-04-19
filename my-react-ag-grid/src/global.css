@@ -1,0 +1,4 @@
+.btn {
+  @apply inline-block transform rounded-lg bg-indigo-500 px-5 py-3 text-sm font-semibold tracking-wider text-white uppercase shadow-lg transition hover:-translate-y-0.5 hover:bg-indigo-400 focus:ring focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none sm:text-base;
+}
+@import 'tailwindcss';
