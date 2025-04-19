@@ -3,9 +3,12 @@ import {
   ColDef,
   ModuleRegistry,
   provideGlobalGridOptions,
+  GridApi,
+  GridReadyEvent,
+  CellEditingStoppedEvent,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -22,23 +25,69 @@ interface RowData {
 }
 
 export const DataGrid: React.FC = () => {
+  const gridApiRef = useRef<GridApi | null>(null);
+  
   // Column Definitions: Defines the columns to be displayed in the grid
   const [columnDefs] = useState<ColDef[]>([
-    { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80 },
-    { field: 'name', headerName: 'Name', sortable: true, filter: true },
+    { 
+      field: 'id', 
+      headerName: 'ID', 
+      sortable: true, 
+      filter: true, 
+      width: 80,
+      editable: false, // ID is not editable
+    },
+    { 
+      field: 'name', 
+      headerName: 'Name', 
+      sortable: true, 
+      filter: true,
+      editable: true,
+    },
     {
       field: 'age',
       headerName: 'Age',
       sortable: true,
       filter: true,
       width: 100,
+      editable: true,
     },
-    { field: 'email', headerName: 'Email', sortable: true, filter: true },
-    { field: 'country', headerName: 'Country', sortable: true, filter: true },
+    { 
+      field: 'email', 
+      headerName: 'Email', 
+      sortable: true, 
+      filter: true,
+      editable: true,
+    },
+    { 
+      field: 'country', 
+      headerName: 'Country', 
+      sortable: true, 
+      filter: true,
+      editable: true,
+    },
+    {
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: any) => {
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleDeleteRow(params.data.id)}
+              className="text-red-600 hover:text-red-800"
+            >
+              Delete
+            </button>
+          </div>
+        );
+      }
+    }
   ]);
 
   // Sample data
-  const [rowData] = useState<RowData[]>([
+  const [rowData, setRowData] = useState<RowData[]>([
     {
       id: 1,
       name: 'John Doe',
@@ -82,18 +131,149 @@ export const DataGrid: React.FC = () => {
     minWidth: 100,
     resizable: true,
   };
+  
+  // Form state for adding new rows
+  const [newRow, setNewRow] = useState<Omit<RowData, 'id'>>({
+    name: '',
+    age: 0,
+    email: '',
+    country: '',
+  });
+
+  // Handle grid ready event to get access to the grid API
+  const onGridReady = (params: GridReadyEvent) => {
+    gridApiRef.current = params.api;
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewRow(prev => ({
+      ...prev,
+      [name]: name === 'age' ? Number(value) : value,
+    }));
+  };
+
+  // Add a new row
+  const handleAddRow = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Get the next available ID (max ID + 1)
+    const nextId = Math.max(...rowData.map(row => row.id), 0) + 1;
+    
+    // Create the new row with the generated ID
+    const rowToAdd: RowData = {
+      id: nextId,
+      ...newRow,
+    };
+    
+    // Update the state with the new row
+    setRowData(prevData => [...prevData, rowToAdd]);
+    
+    // Clear the form
+    setNewRow({
+      name: '',
+      age: 0,
+      email: '',
+      country: '',
+    });
+  };
+
+  // Edit a row (triggered when cell editing stops)
+  const handleCellEditingStopped = (event: CellEditingStoppedEvent) => {
+    const updatedRow = event.data;
+    
+    // Find and update the row in our state
+    setRowData(prevData => 
+      prevData.map(row => 
+        row.id === updatedRow.id ? updatedRow : row
+      )
+    );
+  };
+
+  // Delete a row
+  const handleDeleteRow = (id: number) => {
+    setRowData(prevData => prevData.filter(row => row.id !== id));
+  };
 
   return (
-    <div className="ag-theme-alpine w-full h-[500px]">
-      <AgGridReact
-        rowData={rowData}
-        columnDefs={columnDefs}
-        defaultColDef={defaultColDef}
-        animateRows={true}
-        rowSelection={{ mode: 'multiRow' }}
-        pagination={true}
-        paginationPageSize={20}
-      />
+    <div className="space-y-4">
+      <div className="bg-white p-4 rounded shadow">
+        <h2 className="text-lg font-medium mb-4">Add New Record</h2>
+        <form onSubmit={handleAddRow} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={newRow.name}
+              onChange={handleInputChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Age</label>
+            <input
+              type="number"
+              name="age"
+              value={newRow.age}
+              onChange={handleInputChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={newRow.email}
+              onChange={handleInputChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Country</label>
+            <input
+              type="text"
+              name="country"
+              value={newRow.country}
+              onChange={handleInputChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+            >
+              Add Row
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="ag-theme-alpine w-full h-[500px]">
+        <AgGridReact
+          rowData={rowData}
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          animateRows={true}
+          rowSelection="multiple"
+          pagination={true}
+          paginationPageSize={20}
+          onGridReady={onGridReady}
+          onCellEditingStopped={handleCellEditingStopped}
+          editType="fullRow"
+        />
+      </div>
+      
+      <div className="text-sm text-gray-600">
+        <p>Double-click on any cell to edit its value. Click Delete to remove a row.</p>
+      </div>
     </div>
   );
 };
