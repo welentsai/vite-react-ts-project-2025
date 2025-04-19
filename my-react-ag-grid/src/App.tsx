@@ -1,6 +1,6 @@
 // import './App.css';
-import logo from './assets/logo.svg';
 import workAtBeach from './assets/beach-work.jpg';
+import logo from './assets/logo.svg';
 
 function App() {
   return (

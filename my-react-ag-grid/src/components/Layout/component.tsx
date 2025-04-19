@@ -1,6 +1,6 @@
 import React from 'react';
-import { Sidebar, Sidebar2 } from '../SideBar';
 import { Content, MainContent } from '../Content';
+import { Sidebar2 } from '../SideBar';
 
 export interface LayoutProps {
   children: React.ReactNode;

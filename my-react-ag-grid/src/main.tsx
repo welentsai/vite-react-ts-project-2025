@@ -1,14 +1,13 @@
+import { AppTwo } from '@/components/AppTwo';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './global.css';
-import { AppTwo } from '@/components/AppTwo';
 // import App from './App.tsx';
 // import { Layout } from './components/Layout';
 
 // Import AG Grid styles
-import 'ag-grid-community/styles/ag-grid.css'
-import 'ag-grid-community/styles/ag-theme-alpine.css'
-
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

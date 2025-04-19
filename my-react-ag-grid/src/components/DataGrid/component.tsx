@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import {
+  AllCommunityModule,
+  ColDef,
+  ModuleRegistry,
+  provideGlobalGridOptions,
+} from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, provideGlobalGridOptions, AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import React, { useState } from 'react';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
 // Mark all grids as using legacy themes
-provideGlobalGridOptions({ theme: "legacy"});
-
+provideGlobalGridOptions({ theme: 'legacy' });
 
 // Define the type for our row data
 interface RowData {
@@ -22,18 +26,54 @@ export const DataGrid: React.FC = () => {
   const [columnDefs] = useState<ColDef[]>([
     { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80 },
     { field: 'name', headerName: 'Name', sortable: true, filter: true },
-    { field: 'age', headerName: 'Age', sortable: true, filter: true, width: 100 },
+    {
+      field: 'age',
+      headerName: 'Age',
+      sortable: true,
+      filter: true,
+      width: 100,
+    },
     { field: 'email', headerName: 'Email', sortable: true, filter: true },
     { field: 'country', headerName: 'Country', sortable: true, filter: true },
   ]);
 
   // Sample data
   const [rowData] = useState<RowData[]>([
-    { id: 1, name: 'John Doe', age: 28, email: 'john@example.com', country: 'USA' },
-    { id: 2, name: 'Jane Smith', age: 32, email: 'jane@example.com', country: 'Canada' },
-    { id: 3, name: 'Bob Johnson', age: 45, email: 'bob@example.com', country: 'UK' },
-    { id: 4, name: 'Sarah Williams', age: 29, email: 'sarah@example.com', country: 'Australia' },
-    { id: 5, name: 'Michael Brown', age: 36, email: 'michael@example.com', country: 'Germany' },
+    {
+      id: 1,
+      name: 'John Doe',
+      age: 28,
+      email: 'john@example.com',
+      country: 'USA',
+    },
+    {
+      id: 2,
+      name: 'Jane Smith',
+      age: 32,
+      email: 'jane@example.com',
+      country: 'Canada',
+    },
+    {
+      id: 3,
+      name: 'Bob Johnson',
+      age: 45,
+      email: 'bob@example.com',
+      country: 'UK',
+    },
+    {
+      id: 4,
+      name: 'Sarah Williams',
+      age: 29,
+      email: 'sarah@example.com',
+      country: 'Australia',
+    },
+    {
+      id: 5,
+      name: 'Michael Brown',
+      age: 36,
+      email: 'michael@example.com',
+      country: 'Germany',
+    },
   ]);
 
   // Default column configuration
@@ -50,7 +90,7 @@ export const DataGrid: React.FC = () => {
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
         animateRows={true}
-        rowSelection={{mode: 'multiRow' }}
+        rowSelection={{ mode: 'multiRow' }}
         pagination={true}
         paginationPageSize={20}
       />
