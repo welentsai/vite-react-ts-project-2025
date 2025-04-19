@@ -8,11 +8,13 @@ import './global.css';
 // Import AG Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import AppThree from './components/AppThree/component';
+// import AppThree from './components/AppThree/component';
+import { AppGroupedGrid } from './components/AppGroupedGrid';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppThree />
+    <AppGroupedGrid />
+    {/* <AppThree /> */}
     {/* <AppTwo /> */}
     {/* <Layout>
       <div className="rounded-lg bg-white p-6 shadow-md">
