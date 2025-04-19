@@ -22,6 +22,7 @@ interface RowData {
   age: number;
   email: string;
   country: string;
+  deleted?: boolean; // Flag to mark rows as deleted
 }
 
 export const DataGrid: React.FC = () => {
@@ -74,12 +75,21 @@ export const DataGrid: React.FC = () => {
       cellRenderer: (params: any) => {
         return (
           <div className="flex gap-2">
-            <button
-              onClick={() => handleDeleteRow(params.data.id)}
-              className="text-red-600 hover:text-red-800"
-            >
-              Delete
-            </button>
+            {!params.data.deleted ? (
+              <button
+                onClick={() => handleSoftDeleteRow(params.data.id)}
+                className="text-red-600 hover:text-red-800"
+              >
+                Delete
+              </button>
+            ) : (
+              <button
+                onClick={() => handleRecoverRow(params.data.id)}
+                className="text-green-600 hover:text-green-800"
+              >
+                Recover
+              </button>
+            )}
           </div>
         );
       }
@@ -191,10 +201,51 @@ export const DataGrid: React.FC = () => {
     );
   };
 
-  // Delete a row
-  const handleDeleteRow = (id: number) => {
-    setRowData(prevData => prevData.filter(row => row.id !== id));
+  // Soft delete a row (mark as deleted)
+  const handleSoftDeleteRow = (id: number) => {
+    setRowData(prevData => 
+      prevData.map(row => 
+        row.id === id ? { ...row, deleted: true } : row
+      )
+    );
   };
+
+  // Recover a soft-deleted row
+  const handleRecoverRow = (id: number) => {
+    setRowData(prevData => 
+      prevData.map(row => 
+        row.id === id ? { ...row, deleted: false } : row
+      )
+    );
+  };
+  
+  // Save (console log) rows that are not deleted
+  const handleSave = () => {
+    const activeRows = rowData.filter(row => !row.deleted);
+    console.log('Active rows:', activeRows);
+  };
+
+  // Add CSS for deleted row styling
+  React.useEffect(() => {
+    // Add a CSS rule for deleted rows
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      .deleted-row {
+        color: #9ca3af; /* Gray text */
+        background-color: #f3f4f6; /* Light gray background */
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+      .deleted-row .ag-cell {
+        color: #9ca3af !important;
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    return () => {
+      document.head.removeChild(styleEl);
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -262,17 +313,28 @@ export const DataGrid: React.FC = () => {
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           animateRows={true}
-          rowSelection="multiple"
+          rowSelection={{mode: 'multiRow'}}
           pagination={true}
           paginationPageSize={20}
           onGridReady={onGridReady}
           onCellEditingStopped={handleCellEditingStopped}
           editType="fullRow"
+          getRowClass={(params) => {
+            return params.data.deleted ? 'deleted-row' : '';
+          }}
         />
       </div>
       
-      <div className="text-sm text-gray-600">
-        <p>Double-click on any cell to edit its value. Click Delete to remove a row.</p>
+      <div className="mt-4 flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+          <p>Double-click on any cell to edit its value. Click Delete to mark a row as deleted (will turn gray).</p>
+        </div>
+        <button
+          onClick={handleSave}
+          className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded"
+        >
+          Save Changes
+        </button>
       </div>
     </div>
   );
