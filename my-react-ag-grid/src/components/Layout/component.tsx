@@ -33,10 +33,7 @@ export const Layout: React.FC<LayoutProps> = () => {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* <Sidebar /> */}
-      <Sidebar2
-        activeSection={currentSection}
-        onMenuSelect={handleMenuSelect}
-      />
+      <Sidebar2 activeSection={currentSection} onMenuSelect={handleMenuSelect} />
       <main className="w-full flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
         <div className="w-full px-6 py-8">{renderContent()}</div>
       </main>

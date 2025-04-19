@@ -1,4 +1,4 @@
-import { AppTwo } from '@/components/AppTwo';
+// import { AppTwo } from '@/components/AppTwo';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './global.css';
@@ -8,10 +8,12 @@ import './global.css';
 // Import AG Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import AppThree from './components/AppThree/component';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppTwo />
+    <AppThree />
+    {/* <AppTwo /> */}
     {/* <Layout>
       <div className="rounded-lg bg-white p-6 shadow-md">
         <h2 className="mb-4 text-2xl font-semibold text-gray-800">

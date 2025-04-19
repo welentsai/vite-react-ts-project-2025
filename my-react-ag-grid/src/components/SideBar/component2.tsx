@@ -26,12 +26,7 @@ const ChevronRightIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
   </svg>
 );
 
@@ -154,10 +149,7 @@ export interface Sidebar2Props {
   onMenuSelect: (sectionId: string) => void;
 }
 
-export const Sidebar2: React.FC<Sidebar2Props> = ({
-  activeSection,
-  onMenuSelect,
-}) => {
+export const Sidebar2: React.FC<Sidebar2Props> = ({ activeSection, onMenuSelect }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   // Toggle sidebar expansion
@@ -219,9 +211,7 @@ export const Sidebar2: React.FC<Sidebar2Props> = ({
                     }`}
                   >
                     <span className="flex-shrink-0">{item.icon}</span>
-                    <span className="ml-3 transition-opacity duration-300">
-                      {item.title}
-                    </span>
+                    <span className="ml-3 transition-opacity duration-300">{item.title}</span>
                   </button>
                 </li>
               ))}

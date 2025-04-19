@@ -26,12 +26,7 @@ const ChevronLeftIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 19l-7-7 7-7"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
   </svg>
 );
 
@@ -43,12 +38,7 @@ const ChevronRightIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
   </svg>
 );
 
@@ -222,9 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
                   {isExpanded && (
-                    <span className="ml-3 transition-opacity duration-300">
-                      {item.title}
-                    </span>
+                    <span className="ml-3 transition-opacity duration-300">{item.title}</span>
                   )}
                 </button>
               </li>
@@ -253,9 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         <h1 className="mb-4 text-2xl font-bold text-gray-800">
           {menuItems.find(item => item.id === activeItem)?.title}
         </h1>
-        <p className="text-gray-600">
-          This is the main content area. Your page content goes here.
-        </p>
+        <p className="text-gray-600">This is the main content area. Your page content goes here.</p>
       </div>
     </div>
   );
