@@ -3,12 +3,14 @@ import {
   AllCommunityModule,
   ColDef,
   GridReadyEvent,
+  ICellRendererParams,
   ModuleRegistry,
   provideGlobalGridOptions,
   RowClassParams,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { SAMPLE_DATA } from './type';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -25,470 +27,351 @@ interface SalesData {
   sales: number;
   profit: number;
   units: number;
-  // Add fields for display control
-  isGroupRow?: boolean;
-  groupLevel?: number;
-  expanded?: boolean;
+}
+
+// Type for group-specific data
+interface GroupMetadata {
+  isGroupRow: boolean;
+  groupLevel: number;
+  expanded: boolean;
   parentId?: string;
   groupId?: string;
-  childCount?: number;
-  groupValue?: string;
-  groupField?: string;
+  childCount: number;
+  groupValue: string;
+  groupField: string;
 }
+
+// Combined type for row data (either regular or group row)
+type GridRowData = SalesData & Partial<GroupMetadata>;
 
 // Type for group definition
 interface GroupDefinition {
-  field: string;
+  field: keyof SalesData;
   displayName: string;
 }
 
+// Numeric fields that should be aggregated
+const AGGREGATION_FIELDS: (keyof SalesData)[] = ['sales', 'profit', 'units'];
+
+// Extract to separate file later if component grows
+// const SAMPLE_DATA: SalesData[] = [
+//   {
+//     id: 1,
+//     country: 'USA',
+//     year: 2022,
+//     quarter: 'Q1',
+//     product: 'Laptop',
+//     sales: 45000,
+//     profit: 15000,
+//     units: 30,
+//   },
+//   // ... rest of the data (omitted for brevity)
+// ];
+
 export const CustomGroupingGrid: React.FC = () => {
   const [gridApi, setGridApi] = useState<any>(null);
-  const [rowData, setRowData] = useState<SalesData[]>([]);
   const [groupBy, setGroupBy] = useState<GroupDefinition[]>([]);
-  const [groupedData, setGroupedData] = useState<SalesData[]>([]);
+  const [groupedData, setGroupedData] = useState<GridRowData[]>([]);
+  const [visibleRows, setVisibleRows] = useState<GridRowData[]>([]);
 
-  console.log(gridApi);
+  // Original data - could also come from props or an API call
+  const originalData = useMemo<SalesData[]>(() => SAMPLE_DATA, []);
 
-  // Original unmodified data
-  const originalData = useMemo<SalesData[]>(
-    () => [
-      {
-        id: 1,
-        country: 'USA',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 45000,
-        profit: 15000,
-        units: 30,
-      },
-      {
-        id: 2,
-        country: 'USA',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 35000,
-        profit: 12000,
-        units: 50,
-      },
-      {
-        id: 3,
-        country: 'USA',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Laptop',
-        sales: 50000,
-        profit: 18000,
-        units: 35,
-      },
-      {
-        id: 4,
-        country: 'USA',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Phone',
-        sales: 38000,
-        profit: 13000,
-        units: 55,
-      },
-      {
-        id: 5,
-        country: 'USA',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 55000,
-        profit: 20000,
-        units: 40,
-      },
-      {
-        id: 6,
-        country: 'USA',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 40000,
-        profit: 15000,
-        units: 60,
-      },
-      {
-        id: 7,
-        country: 'Canada',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 30000,
-        profit: 10000,
-        units: 20,
-      },
-      {
-        id: 8,
-        country: 'Canada',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 25000,
-        profit: 8000,
-        units: 40,
-      },
-      {
-        id: 9,
-        country: 'Canada',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Laptop',
-        sales: 32000,
-        profit: 11000,
-        units: 22,
-      },
-      {
-        id: 10,
-        country: 'Canada',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Phone',
-        sales: 28000,
-        profit: 9000,
-        units: 45,
-      },
-      {
-        id: 11,
-        country: 'Canada',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 35000,
-        profit: 12000,
-        units: 25,
-      },
-      {
-        id: 12,
-        country: 'Canada',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 30000,
-        profit: 10000,
-        units: 50,
-      },
-      {
-        id: 13,
-        country: 'UK',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 40000,
-        profit: 13000,
-        units: 28,
-      },
-      {
-        id: 14,
-        country: 'UK',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 32000,
-        profit: 10000,
-        units: 45,
-      },
-      {
-        id: 15,
-        country: 'UK',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Laptop',
-        sales: 42000,
-        profit: 14000,
-        units: 30,
-      },
-      {
-        id: 16,
-        country: 'UK',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Phone',
-        sales: 34000,
-        profit: 11000,
-        units: 48,
-      },
-      {
-        id: 17,
-        country: 'UK',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 45000,
-        profit: 15000,
-        units: 32,
-      },
-      {
-        id: 18,
-        country: 'UK',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 36000,
-        profit: 12000,
-        units: 52,
-      },
-      {
-        id: 19,
-        country: 'Germany',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 38000,
-        profit: 12000,
-        units: 26,
-      },
-      {
-        id: 20,
-        country: 'Germany',
-        year: 2022,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 30000,
-        profit: 9000,
-        units: 42,
-      },
-      {
-        id: 21,
-        country: 'Germany',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Laptop',
-        sales: 40000,
-        profit: 13000,
-        units: 28,
-      },
-      {
-        id: 22,
-        country: 'Germany',
-        year: 2022,
-        quarter: 'Q2',
-        product: 'Phone',
-        sales: 32000,
-        profit: 10000,
-        units: 46,
-      },
-      {
-        id: 23,
-        country: 'Germany',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Laptop',
-        sales: 42000,
-        profit: 14000,
-        units: 30,
-      },
-      {
-        id: 24,
-        country: 'Germany',
-        year: 2023,
-        quarter: 'Q1',
-        product: 'Phone',
-        sales: 34000,
-        profit: 11000,
-        units: 48,
-      },
-    ],
-    []
-  );
+  // Group data transformation function
+  const createGroupedData = useCallback(
+    (data: SalesData[], groupFields: GroupDefinition[]): GridRowData[] => {
+      if (!groupFields.length) {
+        return [...data];
+      }
 
-  // Functions to generate custom grouped data
-  const groupData = useCallback((data: SalesData[], groupFields: GroupDefinition[]) => {
-    if (!groupFields.length) {
-      return [...data];
-    }
-
-    const result: SalesData[] = [];
-    const groupMap: { [key: string]: any } = {};
-
-    // First, create group rows
-    data.forEach(item => {
-      for (let level = 0; level < groupFields.length; level++) {
-        const field = groupFields[level].field;
-        // const fieldDisplayName = groupFields[level].displayName;
-
-        // Create a group ID based on all parent groups
-        const groupParts = [];
-        for (let i = 0; i <= level; i++) {
-          groupParts.push(item[groupFields[i].field as keyof SalesData]);
+      // Map to track groups
+      const groupMap = new Map<
+        string,
+        {
+          items: SalesData[];
+          expanded: boolean;
+          childCount: number;
+          totals: Record<string, number>;
+          rowIndex: number; // Track position in result array
         }
-        const groupId = groupParts.join('|');
-        const parentGroupId = level > 0 ? groupParts.slice(0, -1).join('|') : undefined;
+      >();
 
-        // If this group doesn't exist yet, create it
-        if (!groupMap[groupId]) {
-          const groupValue = String(item[field as keyof SalesData]);
+      // We'll construct the result in two phases for better structure
+      const groupRows: GridRowData[] = [];
 
-          groupMap[groupId] = {
-            items: [],
-            expanded: level === 0, // Expand only first level by default
-            childCount: 0,
-            totals: {
+      // First pass: create group rows and collect group information
+      data.forEach(item => {
+        for (let level = 0; level < groupFields.length; level++) {
+          const field = groupFields[level].field;
+
+          // Create a group ID based on all parent groups
+          const groupParts = groupFields.slice(0, level + 1).map(g => String(item[g.field]));
+
+          const groupId = groupParts.join('|');
+          const parentGroupId = level > 0 ? groupParts.slice(0, -1).join('|') : undefined;
+          const groupValue = String(item[field]);
+
+          // If this group doesn't exist yet, create it
+          if (!groupMap.has(groupId)) {
+            // Initialize group with default values
+            const rowIndex = groupRows.length;
+
+            groupMap.set(groupId, {
+              items: [],
+              expanded: true, // Always expand by default now
+              childCount: 0,
+              rowIndex,
+              totals: AGGREGATION_FIELDS.reduce(
+                (acc, field) => {
+                  acc[field] = 0;
+                  return acc;
+                },
+                {} as Record<string, number>
+              ),
+            });
+
+            // Create initial group row
+            const groupRow: GridRowData = {
+              id: -1 * (rowIndex + 1), // Negative ID to avoid conflicts
+              isGroupRow: true,
+              groupLevel: level,
+              expanded: true, // Always expand by default
+              groupId,
+              parentId: parentGroupId,
+              groupValue,
+              groupField: field,
+              childCount: 0,
+              // Initialize numeric values
               sales: 0,
               profit: 0,
               units: 0,
-            },
-          };
+              // Set the grouped field value
+              ...Object.fromEntries(
+                Object.keys(item)
+                  .filter(key => key === field)
+                  .map(key => [key, item[key as keyof SalesData]])
+              ),
+            };
 
-          // Add a row for this group
-          result.push({
-            id: -1 * result.length - 1, // Negative ID to avoid conflicts with real data
-            isGroupRow: true,
-            groupLevel: level,
-            expanded: level === 0,
-            groupId,
-            parentId: parentGroupId,
-            groupValue,
-            groupField: field,
-            childCount: 0,
-            country: field === 'country' ? groupValue : '',
-            year: field === 'year' ? parseInt(groupValue) : 0,
-            quarter: field === 'quarter' ? groupValue : '',
-            product: field === 'product' ? groupValue : '',
-            sales: 0,
-            profit: 0,
-            units: 0,
+            groupRows.push(groupRow);
+          }
+
+          // Add this item to the group and update aggregates
+          const group = groupMap.get(groupId)!;
+          group.items.push(item);
+          group.childCount += 1;
+
+          // Update all aggregation fields
+          AGGREGATION_FIELDS.forEach(field => {
+            group.totals[field] += item[field];
           });
         }
-
-        // Add this item to the group's items
-        groupMap[groupId].items.push(item);
-        groupMap[groupId].childCount += 1;
-        groupMap[groupId].totals.sales += item.sales;
-        groupMap[groupId].totals.profit += item.profit;
-        groupMap[groupId].totals.units += item.units;
-      }
-    });
-
-    // Update group rows with totals and child counts
-    for (let i = 0; i < result.length; i++) {
-      const row = result[i];
-      if (row.isGroupRow && row.groupId) {
-        const group = groupMap[row.groupId];
-        row.childCount = group.childCount;
-        row.sales = group.totals.sales;
-        row.profit = group.totals.profit;
-        row.units = group.totals.units;
-      }
-    }
-
-    // Now add actual data rows after all group rows
-    data.forEach(item => {
-      // Create a full group ID for this item based on all group fields
-      const groupParts = [];
-      for (let i = 0; i < groupFields.length; i++) {
-        groupParts.push(item[groupFields[i].field as keyof SalesData]);
-      }
-      const fullGroupId = groupParts.join('|');
-
-      // Add item to result with a reference to its parent group
-      result.push({
-        ...item,
-        isGroupRow: false,
-        parentId: fullGroupId,
       });
-    });
 
-    return result;
-  }, []);
+      // Update group rows with totals and child counts
+      for (let i = 0; i < groupRows.length; i++) {
+        const row = groupRows[i];
+        if (row.isGroupRow && row.groupId) {
+          const group = groupMap.get(row.groupId);
+          if (group) {
+            row.childCount = group.childCount;
 
-  // Function to filter rows based on expanded state
-  const filterByExpandedState = useCallback((allRows: SalesData[]) => {
-    const expandedGroups = new Set<string>();
-
-    // First, find all expanded groups
-    allRows.forEach(row => {
-      if (row.isGroupRow && row.expanded && row.groupId) {
-        expandedGroups.add(row.groupId);
-      }
-    });
-
-    // Then, filter rows based on expanded state
-    return allRows.filter(row => {
-      // Always show group rows
-      if (row.isGroupRow) return true;
-
-      // For data rows, check if all parent groups are expanded
-      if (row.parentId) {
-        let currentGroupId = row.parentId;
-
-        // Split the full parent ID into hierarchy levels
-        const parentParts = currentGroupId.split('|');
-
-        // Check each level of the hierarchy
-        for (let i = 1; i <= parentParts.length; i++) {
-          const groupIdToCheck = parentParts.slice(0, i).join('|');
-          if (!expandedGroups.has(groupIdToCheck)) {
-            return false; // One of the parent groups is not expanded
+            // Update all aggregation fields
+            AGGREGATION_FIELDS.forEach(field => {
+              row[field] = group.totals[field];
+            });
           }
         }
-        return true; // All parent groups are expanded
       }
 
-      return false; // No parent ID, shouldn't happen with our data structure
-    });
-  }, []);
+      // Create the final result array with interleaved structure
+      const result: GridRowData[] = [];
+
+      // Helper function to add a group and its children recursively
+      const addGroupWithChildren = (groupId: string, level: number) => {
+        // Add the group row first
+        const group = groupMap.get(groupId);
+        if (!group) return;
+
+        const groupRow = groupRows[group.rowIndex];
+        result.push(groupRow);
+
+        // If only one level of grouping, add all child data rows immediately after the group
+        if (groupFields.length === 1) {
+          // Sort items by the first non-grouped field for better organization
+          const sortedItems = [...group.items].sort((a, b) => {
+            // Find first non-grouped field
+            for (const key of Object.keys(a) as Array<keyof SalesData>) {
+              if (key !== groupFields[0].field && typeof a[key] === 'string') {
+                return String(a[key]).localeCompare(String(b[key]));
+              }
+            }
+            return 0;
+          });
+
+          // Add all child data rows
+          sortedItems.forEach(item => {
+            result.push({
+              ...item,
+              isGroupRow: false,
+              parentId: groupId,
+            });
+          });
+        } else {
+          // For multi-level grouping, find and add child groups
+          const nextLevel = level + 1;
+          if (nextLevel < groupFields.length) {
+            // Get unique values for the next level
+            const nextField = groupFields[nextLevel].field;
+            const childValues = new Set(group.items.map(item => String(item[nextField])));
+
+            // For each child value, recursively add its group
+            childValues.forEach(childValue => {
+              const childGroupId = `${groupId}|${childValue}`;
+              addGroupWithChildren(childGroupId, nextLevel);
+            });
+          }
+        }
+      };
+
+      // Start with top-level groups
+      if (groupFields.length > 0) {
+        const field = groupFields[0].field;
+        const uniqueValues = new Set(data.map(item => String(item[field])));
+
+        uniqueValues.forEach(value => {
+          const groupId = value;
+          addGroupWithChildren(groupId, 0);
+        });
+      }
+
+      // If no rows were added (should never happen), fall back to flat data
+      if (result.length === 0) {
+        return data.map(item => ({
+          ...item,
+          isGroupRow: false,
+        }));
+      }
+
+      return result;
+    },
+    []
+  );
+
+  // Get visible rows based on expanded state
+  const getVisibleRows = useCallback(
+    (allRows: GridRowData[]): GridRowData[] => {
+      // For single-level grouping, all rows are already visible in the correct order
+      if (groupBy.length === 1) {
+        return allRows;
+      }
+
+      // For multi-level grouping or no grouping, use expand/collapse logic
+      const expandedGroups = new Set<string>();
+
+      // Find all expanded groups
+      allRows.forEach(row => {
+        if (row.isGroupRow && row.expanded && row.groupId) {
+          expandedGroups.add(row.groupId);
+        }
+      });
+
+      // Filter rows based on expanded state
+      return allRows.filter(row => {
+        // Always show group rows
+        if (row.isGroupRow) return true;
+
+        // For data rows, check if all parent groups are expanded
+        if (row.parentId) {
+          const parentParts = row.parentId.split('|');
+
+          // Check each level of the hierarchy
+          for (let i = 1; i <= parentParts.length; i++) {
+            const groupIdToCheck = parentParts.slice(0, i).join('|');
+            if (!expandedGroups.has(groupIdToCheck)) {
+              return false; // Parent group is collapsed
+            }
+          }
+          return true; // All parent groups are expanded
+        }
+
+        return true; // Non-grouped data
+      });
+    },
+    [groupBy.length]
+  );
 
   // Toggle group expansion
   const toggleGroup = useCallback((groupId: string) => {
     setGroupedData(prevData => {
-      const newData = [...prevData];
-
-      // Find the group row and toggle its expanded state
-      const groupRowIndex = newData.findIndex(row => row.isGroupRow && row.groupId === groupId);
-      if (groupRowIndex >= 0) {
-        newData[groupRowIndex] = {
-          ...newData[groupRowIndex],
-          expanded: !newData[groupRowIndex].expanded,
-        };
-      }
-
-      return newData;
+      return prevData.map(row =>
+        row.isGroupRow && row.groupId === groupId ? { ...row, expanded: !row.expanded } : row
+      );
     });
   }, []);
 
-  // Apply grouping when group definition changes
+  // Generate grouped data when grouping changes
   useEffect(() => {
-    const allGroupedData = groupData(originalData, groupBy);
-    setGroupedData(allGroupedData);
-  }, [groupBy, groupData, originalData]);
+    const groupedRows = createGroupedData(originalData, groupBy);
+    setGroupedData(groupedRows);
+  }, [groupBy, createGroupedData, originalData]);
 
-  // Apply filtering when grouped data changes
+  // Update visible rows when grouped data changes
   useEffect(() => {
-    const filteredData = filterByExpandedState(groupedData);
-    setRowData(filteredData);
-  }, [groupedData, filterByExpandedState]);
+    const visibleRows = getVisibleRows(groupedData);
+    setVisibleRows(visibleRows);
+  }, [groupedData, getVisibleRows]);
 
-  // Custom cell renderer for the first column to show groups with expand/collapse icons
-  const groupCellRenderer = (params: any) => {
-    const data = params.data;
+  // Group cell renderer component for better readability
+  const GroupCellRenderer = useCallback(
+    (params: ICellRendererParams) => {
+      const data = params.data as GridRowData;
 
-    if (data.isGroupRow) {
-      const paddingLeft = data.groupLevel * 20; // Indent based on group level
-      const icon = data.expanded ? '▼' : '►';
+      if (!data) {
+        return null;
+      }
 
-      return (
-        <div style={{ paddingLeft: `${paddingLeft}px` }} className="flex items-center">
-          <span
-            onClick={() => toggleGroup(data.groupId)}
-            className="cursor-pointer mr-2 text-blue-600 select-none"
-          >
-            {icon}
-          </span>
-          <span className="font-medium">{`${data.groupValue} (${data.childCount})`}</span>
-        </div>
-      );
-    }
+      if (data.isGroupRow) {
+        const paddingLeft = (data.groupLevel || 0) * 20; // Indent based on level
+        const icon = data.expanded ? '▼' : '►';
 
-    // For data rows, add padding to align with the groups
-    const paddingLeft = groupBy.length * 20 + 15;
-    return <div style={{ paddingLeft: `${paddingLeft}px` }}>{params.value}</div>;
-  };
+        return (
+          <div style={{ paddingLeft: `${paddingLeft}px` }} className="flex items-center">
+            {/* Only show toggle icon for multi-level grouping */}
+            {groupBy.length > 1 && (
+              <span
+                onClick={() => data.groupId && toggleGroup(data.groupId)}
+                className="cursor-pointer mr-2 text-blue-600 select-none"
+              >
+                {icon}
+              </span>
+            )}
+            <span className={`font-medium ${groupBy.length === 1 ? 'text-blue-700' : ''}`}>
+              {`${data.groupValue} (${data.childCount})`}
+            </span>
+          </div>
+        );
+      }
+
+      // For data rows, add padding to align with groups
+      const dataRowPadding =
+        groupBy.length === 1
+          ? (data.groupLevel || 0) * 20 + 40 // More indent for single-level grouping
+          : groupBy.length * 20 + 15; // Standard indent for multi-level
+
+      return <div style={{ paddingLeft: `${dataRowPadding}px` }}>{params.value}</div>;
+    },
+    [groupBy.length, toggleGroup]
+  );
+
+  // Value formatter for numeric columns
+  const formatCurrency = useCallback((value: number): string => {
+    return `$${value.toLocaleString()}`;
+  }, []);
+
+  const formatNumber = useCallback((value: number): string => {
+    return value.toLocaleString();
+  }, []);
 
   // Column Definitions
   const columnDefs = useMemo<ColDef[]>(
@@ -496,7 +379,7 @@ export const CustomGroupingGrid: React.FC = () => {
       {
         headerName: 'Data',
         field: 'country', // Default field, will change based on group
-        cellRenderer: groupCellRenderer,
+        cellRenderer: GroupCellRenderer,
         minWidth: 220,
         suppressSizeToFit: true,
       },
@@ -504,109 +387,146 @@ export const CustomGroupingGrid: React.FC = () => {
         field: 'country',
         headerName: 'Country',
         minWidth: 140,
-        // Hide for group rows
-        cellRenderer: (params: any) => {
-          return params.data.isGroupRow ? '' : params.value;
+        cellRenderer: (params: ICellRendererParams) => {
+          const data = params.data as GridRowData;
+          return data?.isGroupRow ? '' : params.value;
         },
       },
       {
         field: 'year',
         headerName: 'Year',
         minWidth: 120,
-        cellRenderer: (params: any) => {
-          return params.data.isGroupRow ? '' : params.value;
+        cellRenderer: (params: ICellRendererParams) => {
+          const data = params.data as GridRowData;
+          return data?.isGroupRow ? '' : params.value;
         },
       },
       {
         field: 'quarter',
         headerName: 'Quarter',
         minWidth: 120,
-        cellRenderer: (params: any) => {
-          return params.data.isGroupRow ? '' : params.value;
+        cellRenderer: (params: ICellRendererParams) => {
+          const data = params.data as GridRowData;
+          return data?.isGroupRow ? '' : params.value;
         },
       },
       {
         field: 'product',
         headerName: 'Product',
         minWidth: 140,
-        cellRenderer: (params: any) => {
-          return params.data.isGroupRow ? '' : params.value;
+        cellRenderer: (params: ICellRendererParams) => {
+          const data = params.data as GridRowData;
+          return data?.isGroupRow ? '' : params.value;
         },
       },
       {
         field: 'sales',
         headerName: 'Sales',
         minWidth: 150,
-        cellRenderer: (params: any) => {
-          const value = params.value;
-          // For group rows, display as a sum with different styling
-          if (params.data.isGroupRow) {
-            return <span className="font-medium">{`$${value.toLocaleString()}`}</span>;
-          }
-          return `$${value.toLocaleString()}`;
+        cellRenderer: (params: ICellRendererParams) => {
+          const data = params.data as GridRowData;
+          const value = params.value as number;
+
+          return (
+            <span className={data?.isGroupRow ? 'font-medium' : ''}>{formatCurrency(value)}</span>
+          );
         },
       },
       {
         field: 'profit',
         headerName: 'Profit',
         minWidth: 150,
-        cellRenderer: (params: any) => {
-          const value = params.value;
-          if (params.data.isGroupRow) {
-            return <span className="font-medium">{`$${value.toLocaleString()}`}</span>;
-          }
-          return `$${value.toLocaleString()}`;
+        cellRenderer: (params: ICellRendererParams) => {
+          const data = params.data as GridRowData;
+          const value = params.value as number;
+
+          return (
+            <span className={data?.isGroupRow ? 'font-medium' : ''}>{formatCurrency(value)}</span>
+          );
         },
       },
       {
         field: 'units',
         headerName: 'Units Sold',
         minWidth: 140,
-        cellRenderer: (params: any) => {
-          const value = params.value;
-          if (params.data.isGroupRow) {
-            return <span className="font-medium">{value.toLocaleString()}</span>;
-          }
-          return value.toLocaleString();
+        cellRenderer: (params: ICellRendererParams) => {
+          const data = params.data as GridRowData;
+          const value = params.value as number;
+
+          return (
+            <span className={data?.isGroupRow ? 'font-medium' : ''}>{formatNumber(value)}</span>
+          );
         },
       },
     ],
-    [groupCellRenderer, groupBy.length]
+    [GroupCellRenderer, formatCurrency, formatNumber]
   );
 
   // Default column configuration
-  const defaultColDef = useMemo(() => {
-    return {
+  const defaultColDef = useMemo(
+    () => ({
       flex: 1,
       sortable: true,
       resizable: true,
       filter: true,
-    };
-  }, []);
+    }),
+    []
+  );
 
-  // Row class rules to style group rows differently
-  const rowClassRules = useMemo(() => {
-    return {
+  // Row class rules for styling
+  const rowClassRules = useMemo(
+    () => ({
       'bg-blue-50': (params: RowClassParams) => !!params.data?.isGroupRow,
       'font-medium': (params: RowClassParams) => !!params.data?.isGroupRow,
       'cursor-pointer': (params: RowClassParams) => !!params.data?.isGroupRow,
-    };
-  }, []);
+      // Add special styling for data rows in single-level grouping
+      'border-b border-gray-100': (params: RowClassParams) =>
+        !params.data?.isGroupRow && groupBy.length === 1,
+      'hover:bg-gray-50': (params: RowClassParams) =>
+        !params.data?.isGroupRow && groupBy.length === 1,
+    }),
+    [groupBy.length]
+  );
 
-  // Event handler for grid ready
+  // Handle grid ready event
   const onGridReady = useCallback((params: GridReadyEvent) => {
     setGridApi(params.api);
 
     // Auto-size columns after data is loaded
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       params.api.sizeColumnsToFit();
-    }, 0);
+    });
   }, []);
 
-  // Function to apply grouping
-  const applyGrouping = useCallback((fields: GroupDefinition[]) => {
-    setGroupBy(fields);
-  }, []);
+  // Predefined grouping options
+  const groupingOptions = useMemo<Array<{ label: string; grouping: GroupDefinition[] }>>(
+    () => [
+      {
+        label: 'Group by Country',
+        grouping: [{ field: 'country', displayName: 'Country' }],
+      },
+      {
+        label: 'Group by Country & Year',
+        grouping: [
+          { field: 'country', displayName: 'Country' },
+          { field: 'year', displayName: 'Year' },
+        ],
+      },
+      {
+        label: 'Group by Country, Year & Quarter',
+        grouping: [
+          { field: 'country', displayName: 'Country' },
+          { field: 'year', displayName: 'Year' },
+          { field: 'quarter', displayName: 'Quarter' },
+        ],
+      },
+      {
+        label: 'Group by Product',
+        grouping: [{ field: 'product', displayName: 'Product' }],
+      },
+    ],
+    []
+  );
 
   return (
     <div className="space-y-4">
@@ -614,43 +534,17 @@ export const CustomGroupingGrid: React.FC = () => {
         <h2 className="text-lg font-semibold mb-3">Sales Data Analysis (Custom Grouping)</h2>
 
         <div className="flex flex-wrap gap-2 mb-4">
+          {groupingOptions.map((option, index) => (
+            <button
+              key={index}
+              onClick={() => setGroupBy(option.grouping)}
+              className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
+            >
+              {option.label}
+            </button>
+          ))}
           <button
-            onClick={() => applyGrouping([{ field: 'country', displayName: 'Country' }])}
-            className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
-          >
-            Group by Country
-          </button>
-          <button
-            onClick={() =>
-              applyGrouping([
-                { field: 'country', displayName: 'Country' },
-                { field: 'year', displayName: 'Year' },
-              ])
-            }
-            className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
-          >
-            Group by Country & Year
-          </button>
-          <button
-            onClick={() =>
-              applyGrouping([
-                { field: 'country', displayName: 'Country' },
-                { field: 'year', displayName: 'Year' },
-                { field: 'quarter', displayName: 'Quarter' },
-              ])
-            }
-            className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
-          >
-            Group by Country, Year & Quarter
-          </button>
-          <button
-            onClick={() => applyGrouping([{ field: 'product', displayName: 'Product' }])}
-            className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
-          >
-            Group by Product
-          </button>
-          <button
-            onClick={() => applyGrouping([])}
+            onClick={() => setGroupBy([])}
             className="px-3 py-1.5 bg-gray-100 text-gray-800 text-sm font-medium rounded hover:bg-gray-200 transition-colors"
           >
             Clear Grouping
@@ -659,13 +553,13 @@ export const CustomGroupingGrid: React.FC = () => {
 
         <div className="ag-theme-alpine w-full h-[600px] rounded-lg overflow-hidden border border-gray-200">
           <AgGridReact
-            rowData={rowData}
+            rowData={visibleRows}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             rowClassRules={rowClassRules}
             animateRows={true}
             pagination={true}
-            paginationPageSize={100} // Set higher to avoid pagination issues with grouped data
+            paginationPageSize={100} // Higher to avoid pagination issues with grouped data
             domLayout="normal"
             onGridReady={onGridReady}
             getRowId={params => String(params.data.id)}

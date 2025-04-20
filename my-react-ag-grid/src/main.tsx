@@ -9,14 +9,14 @@ import './global.css';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 // import AppThree from './components/AppThree/component';
-// import { AppGroupedGrid } from './components/AppGroupedGrid';
-import { AppTwo } from '@/components/AppTwo';
+import { AppGroupedGrid } from '@/components/AppGroupedGrid';
+// import { AppTwo } from '@/components/AppTwo';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {/* <AppGroupedGrid /> */}
+    <AppGroupedGrid />
     {/* <AppThree /> */}
-    <AppTwo />
+    {/* <AppTwo /> */}
     {/* <Layout>
       <div className="rounded-lg bg-white p-6 shadow-md">
         <h2 className="mb-4 text-2xl font-semibold text-gray-800">
