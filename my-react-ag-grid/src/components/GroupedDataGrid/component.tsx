@@ -55,6 +55,7 @@ const AGGREGATION_FIELDS: (keyof SalesData)[] = ['sales', 'profit', 'units'];
 
 export const CustomGroupingGrid: React.FC = () => {
   const [gridApi, setGridApi] = useState<any>(null);
+  const [gridKey, setGridKey] = useState<number>(0); // Add a key to force re-renders
   const [groupBy, setGroupBy] = useState<GroupDefinition[]>([]);
   const [groupedData, setGroupedData] = useState<GridRowData[]>([]);
   const [visibleRows, setVisibleRows] = useState<GridRowData[]>([]);
@@ -74,10 +75,10 @@ export const CustomGroupingGrid: React.FC = () => {
         string,
         {
           items: SalesData[];
-          expanded: boolean; // This will now be used for all grouping levels
+          expanded: boolean;
           childCount: number;
           totals: Record<string, number>;
-          rowIndex: number; // Track position in result array
+          rowIndex: number;
         }
       >();
 
@@ -103,7 +104,7 @@ export const CustomGroupingGrid: React.FC = () => {
 
             groupMap.set(groupId, {
               items: [],
-              expanded: true, // Default to expanded, this will be used for all levels now
+              expanded: true, // Default to expanded
               childCount: 0,
               rowIndex,
               totals: AGGREGATION_FIELDS.reduce(
@@ -181,45 +182,43 @@ export const CustomGroupingGrid: React.FC = () => {
         const groupRow = groupRows[group.rowIndex];
         result.push(groupRow);
 
-        // If expanded, add child items
-        if (group.expanded) {
-          // If only one level of grouping, add all child data rows immediately after the group
-          if (groupFields.length === 1) {
-            // Sort items by the first non-grouped field for better organization
-            const sortedItems = [...group.items].sort((a, b) => {
-              // Find first non-grouped field
-              for (const key of Object.keys(a) as Array<keyof SalesData>) {
-                if (key !== groupFields[0].field && typeof a[key] === 'string') {
-                  return String(a[key]).localeCompare(String(b[key]));
-                }
+        // If expanded and only one level of grouping, add all child data rows immediately after the group
+        if (group.expanded && groupFields.length === 1) {
+          // Sort items by the first non-grouped field for better organization
+          const sortedItems = [...group.items].sort((a, b) => {
+            // Find first non-grouped field
+            for (const key of Object.keys(a) as Array<keyof SalesData>) {
+              if (key !== groupFields[0].field && typeof a[key] === 'string') {
+                return String(a[key]).localeCompare(String(b[key]));
               }
-              return 0;
-            });
-
-            // Add all child data rows
-            sortedItems.forEach(item => {
-              result.push({
-                ...item,
-                isGroupRow: false,
-                parentId: groupId,
-              });
-            });
-          } else {
-            // For multi-level grouping, find and add child groups
-            const nextLevel = level + 1;
-            if (nextLevel < groupFields.length) {
-              // Get unique values for the next level
-              const nextField = groupFields[nextLevel].field;
-              const childValues = new Set(group.items.map(item => String(item[nextField])));
-
-              // For each child value, recursively add its group
-              childValues.forEach(childValue => {
-                const childGroupId = `${groupId}|${childValue}`;
-                addGroupWithChildren(childGroupId, nextLevel);
-              });
             }
+            return 0;
+          });
+
+          // Add all child data rows
+          sortedItems.forEach(item => {
+            result.push({
+              ...item,
+              isGroupRow: false,
+              parentId: groupId,
+            });
+          });
+        } else if (group.expanded && groupFields.length > 1) {
+          // For expanded multi-level grouping, find and add child groups
+          const nextLevel = level + 1;
+          if (nextLevel < groupFields.length) {
+            // Get unique values for the next level
+            const nextField = groupFields[nextLevel].field;
+            const childValues = new Set(group.items.map(item => String(item[nextField])));
+
+            // For each child value, recursively add its group
+            childValues.forEach(childValue => {
+              const childGroupId = `${groupId}|${childValue}`;
+              addGroupWithChildren(childGroupId, nextLevel);
+            });
           }
         }
+        // If not expanded, don't add children
       };
 
       // Start with top-level groups
@@ -249,7 +248,7 @@ export const CustomGroupingGrid: React.FC = () => {
   // Get visible rows based on expanded state
   const getVisibleRows = useCallback(
     (allRows: GridRowData[]): GridRowData[] => {
-      const visibleRows: GridRowData[] = [];
+      const result: GridRowData[] = [];
       const expandedGroups = new Set<string>();
 
       // First pass: collect all expanded groups
@@ -259,67 +258,72 @@ export const CustomGroupingGrid: React.FC = () => {
         }
       });
 
-      // Second pass: determine visible rows
+      // Second pass: add visible rows
       for (let i = 0; i < allRows.length; i++) {
         const row = allRows[i];
-
+        
         // Always show group rows
         if (row.isGroupRow) {
-          visibleRows.push(row);
+          result.push(row);
           continue;
         }
-
+        
         // For data rows, check if parent is expanded
         if (row.parentId) {
-          // For single-level grouping
-          if (groupBy.length === 1) {
-            if (expandedGroups.has(row.parentId)) {
-              visibleRows.push(row);
-            }
-          } else {
-            // For multi-level grouping, check if all parent groups are expanded
-            const parentParts = row.parentId.split('|');
-            let isVisible = true;
-
-            // Check each level of the hierarchy
-            for (let i = 1; i <= parentParts.length; i++) {
-              const groupIdToCheck = parentParts.slice(0, i).join('|');
-              if (!expandedGroups.has(groupIdToCheck)) {
-                isVisible = false;
-                break;
-              }
-            }
-
-            if (isVisible) {
-              visibleRows.push(row);
-            }
+          if (expandedGroups.has(row.parentId)) {
+            result.push(row);
           }
-        } else {
-          // Non-grouped data rows are always visible
-          visibleRows.push(row);
+        } else if (!groupBy.length) {
+          // Only show non-grouped rows when no grouping is applied
+          result.push(row);
         }
       }
 
-      return visibleRows;
+      return result;
     },
-    [groupBy.length]
+    [groupBy]
   );
 
   // Toggle group expansion
   const toggleGroup = useCallback((groupId: string) => {
     setGroupedData(prevData => {
+      // Find the current group and get its expanded state
+      const currentGroup = prevData.find(row => row.isGroupRow && row.groupId === groupId);
+      const newExpandedState = currentGroup ? !currentGroup.expanded : false;
+      
       // Update the expanded state for the group
       const updatedData = prevData.map(row =>
-        row.isGroupRow && row.groupId === groupId ? { ...row, expanded: !row.expanded } : row
+        row.isGroupRow && row.groupId === groupId 
+          ? { ...row, expanded: newExpandedState } 
+          : row
       );
+      
+      // Force grid refresh by incrementing key after state update
+      setTimeout(() => {
+        setGridKey(prev => prev + 1);
+      }, 0);
+      
       return updatedData;
     });
   }, []);
 
   // Generate grouped data when grouping changes
   useEffect(() => {
+    // When grouping changes, make sure all groups start as expanded
     const groupedRows = createGroupedData(originalData, groupBy);
-    setGroupedData(groupedRows);
+    
+    // Ensure all group rows have expanded set correctly
+    const updatedRows = groupedRows.map(row => {
+      if (row.isGroupRow) {
+        return { ...row, expanded: true }; // Default to expanded
+      }
+      return row;
+    });
+    
+    setGroupedData(updatedRows);
+    
+    // Reset grid key to force a full re-render
+    setGridKey(prev => prev + 1);
   }, [groupBy, createGroupedData, originalData]);
 
   // Update visible rows when grouped data changes
@@ -328,7 +332,7 @@ export const CustomGroupingGrid: React.FC = () => {
     setVisibleRows(visibleRows);
   }, [groupedData, getVisibleRows]);
 
-  // Group cell renderer component for better readability
+  // Custom cell renderer function for the group cell
   const GroupCellRenderer = useCallback(
     (params: ICellRendererParams) => {
       const data = params.data as GridRowData;
@@ -339,16 +343,20 @@ export const CustomGroupingGrid: React.FC = () => {
 
       if (data.isGroupRow) {
         const paddingLeft = (data.groupLevel || 0) * 20; // Indent based on level
-        const icon = data.expanded ? '▼' : '►';
-
+        const isExpanded = !!data.expanded;
+        
         return (
           <div style={{ paddingLeft: `${paddingLeft}px` }} className="flex items-center">
-            {/* Show toggle icon for ALL grouping levels now */}
             <span
-              onClick={() => data.groupId && toggleGroup(data.groupId)}
+              onClick={() => {
+                if (data.groupId) {
+                  toggleGroup(data.groupId);
+                }
+              }}
               className="cursor-pointer mr-2 text-blue-600 select-none"
+              style={{ minWidth: '12px', display: 'inline-block' }}
             >
-              {icon}
+              {isExpanded ? '▼' : '►'}
             </span>
             <span className="font-medium text-blue-700">
               {`${data.groupValue} (${data.childCount})`}
@@ -554,6 +562,7 @@ export const CustomGroupingGrid: React.FC = () => {
 
         <div className="ag-theme-alpine w-full h-[600px] rounded-lg overflow-hidden border border-gray-200">
           <AgGridReact
+            key={gridKey} // Add key to force re-render
             rowData={visibleRows}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
