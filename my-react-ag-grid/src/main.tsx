@@ -12,6 +12,13 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { AppGroupedGrid } from '@/components/AppGroupedGrid';
 // import { AppTwo } from '@/components/AppTwo';
 
+import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
+
+// Register all community features
+ModuleRegistry.registerModules([AllCommunityModule]);
+// Mark all grids as using legacy themes
+provideGlobalGridOptions({ theme: 'legacy' });
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppGroupedGrid />

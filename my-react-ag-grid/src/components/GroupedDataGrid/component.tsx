@@ -53,21 +53,6 @@ interface GroupDefinition {
 // Numeric fields that should be aggregated
 const AGGREGATION_FIELDS: (keyof SalesData)[] = ['sales', 'profit', 'units'];
 
-// Extract to separate file later if component grows
-// const SAMPLE_DATA: SalesData[] = [
-//   {
-//     id: 1,
-//     country: 'USA',
-//     year: 2022,
-//     quarter: 'Q1',
-//     product: 'Laptop',
-//     sales: 45000,
-//     profit: 15000,
-//     units: 30,
-//   },
-//   // ... rest of the data (omitted for brevity)
-// ];
-
 export const CustomGroupingGrid: React.FC = () => {
   const [gridApi, setGridApi] = useState<any>(null);
   const [groupBy, setGroupBy] = useState<GroupDefinition[]>([]);
@@ -89,7 +74,7 @@ export const CustomGroupingGrid: React.FC = () => {
         string,
         {
           items: SalesData[];
-          expanded: boolean;
+          expanded: boolean; // This will now be used for all grouping levels
           childCount: number;
           totals: Record<string, number>;
           rowIndex: number; // Track position in result array
@@ -118,7 +103,7 @@ export const CustomGroupingGrid: React.FC = () => {
 
             groupMap.set(groupId, {
               items: [],
-              expanded: true, // Always expand by default now
+              expanded: true, // Default to expanded, this will be used for all levels now
               childCount: 0,
               rowIndex,
               totals: AGGREGATION_FIELDS.reduce(
@@ -135,7 +120,7 @@ export const CustomGroupingGrid: React.FC = () => {
               id: -1 * (rowIndex + 1), // Negative ID to avoid conflicts
               isGroupRow: true,
               groupLevel: level,
-              expanded: true, // Always expand by default
+              expanded: true, // Default to expanded
               groupId,
               parentId: parentGroupId,
               groupValue,
@@ -196,40 +181,43 @@ export const CustomGroupingGrid: React.FC = () => {
         const groupRow = groupRows[group.rowIndex];
         result.push(groupRow);
 
-        // If only one level of grouping, add all child data rows immediately after the group
-        if (groupFields.length === 1) {
-          // Sort items by the first non-grouped field for better organization
-          const sortedItems = [...group.items].sort((a, b) => {
-            // Find first non-grouped field
-            for (const key of Object.keys(a) as Array<keyof SalesData>) {
-              if (key !== groupFields[0].field && typeof a[key] === 'string') {
-                return String(a[key]).localeCompare(String(b[key]));
+        // If expanded, add child items
+        if (group.expanded) {
+          // If only one level of grouping, add all child data rows immediately after the group
+          if (groupFields.length === 1) {
+            // Sort items by the first non-grouped field for better organization
+            const sortedItems = [...group.items].sort((a, b) => {
+              // Find first non-grouped field
+              for (const key of Object.keys(a) as Array<keyof SalesData>) {
+                if (key !== groupFields[0].field && typeof a[key] === 'string') {
+                  return String(a[key]).localeCompare(String(b[key]));
+                }
               }
+              return 0;
+            });
+
+            // Add all child data rows
+            sortedItems.forEach(item => {
+              result.push({
+                ...item,
+                isGroupRow: false,
+                parentId: groupId,
+              });
+            });
+          } else {
+            // For multi-level grouping, find and add child groups
+            const nextLevel = level + 1;
+            if (nextLevel < groupFields.length) {
+              // Get unique values for the next level
+              const nextField = groupFields[nextLevel].field;
+              const childValues = new Set(group.items.map(item => String(item[nextField])));
+
+              // For each child value, recursively add its group
+              childValues.forEach(childValue => {
+                const childGroupId = `${groupId}|${childValue}`;
+                addGroupWithChildren(childGroupId, nextLevel);
+              });
             }
-            return 0;
-          });
-
-          // Add all child data rows
-          sortedItems.forEach(item => {
-            result.push({
-              ...item,
-              isGroupRow: false,
-              parentId: groupId,
-            });
-          });
-        } else {
-          // For multi-level grouping, find and add child groups
-          const nextLevel = level + 1;
-          if (nextLevel < groupFields.length) {
-            // Get unique values for the next level
-            const nextField = groupFields[nextLevel].field;
-            const childValues = new Set(group.items.map(item => String(item[nextField])));
-
-            // For each child value, recursively add its group
-            childValues.forEach(childValue => {
-              const childGroupId = `${groupId}|${childValue}`;
-              addGroupWithChildren(childGroupId, nextLevel);
-            });
           }
         }
       };
@@ -261,42 +249,58 @@ export const CustomGroupingGrid: React.FC = () => {
   // Get visible rows based on expanded state
   const getVisibleRows = useCallback(
     (allRows: GridRowData[]): GridRowData[] => {
-      // For single-level grouping, all rows are already visible in the correct order
-      if (groupBy.length === 1) {
-        return allRows;
-      }
-
-      // For multi-level grouping or no grouping, use expand/collapse logic
+      const visibleRows: GridRowData[] = [];
       const expandedGroups = new Set<string>();
 
-      // Find all expanded groups
+      // First pass: collect all expanded groups
       allRows.forEach(row => {
         if (row.isGroupRow && row.expanded && row.groupId) {
           expandedGroups.add(row.groupId);
         }
       });
 
-      // Filter rows based on expanded state
-      return allRows.filter(row => {
+      // Second pass: determine visible rows
+      for (let i = 0; i < allRows.length; i++) {
+        const row = allRows[i];
+
         // Always show group rows
-        if (row.isGroupRow) return true;
-
-        // For data rows, check if all parent groups are expanded
-        if (row.parentId) {
-          const parentParts = row.parentId.split('|');
-
-          // Check each level of the hierarchy
-          for (let i = 1; i <= parentParts.length; i++) {
-            const groupIdToCheck = parentParts.slice(0, i).join('|');
-            if (!expandedGroups.has(groupIdToCheck)) {
-              return false; // Parent group is collapsed
-            }
-          }
-          return true; // All parent groups are expanded
+        if (row.isGroupRow) {
+          visibleRows.push(row);
+          continue;
         }
 
-        return true; // Non-grouped data
-      });
+        // For data rows, check if parent is expanded
+        if (row.parentId) {
+          // For single-level grouping
+          if (groupBy.length === 1) {
+            if (expandedGroups.has(row.parentId)) {
+              visibleRows.push(row);
+            }
+          } else {
+            // For multi-level grouping, check if all parent groups are expanded
+            const parentParts = row.parentId.split('|');
+            let isVisible = true;
+
+            // Check each level of the hierarchy
+            for (let i = 1; i <= parentParts.length; i++) {
+              const groupIdToCheck = parentParts.slice(0, i).join('|');
+              if (!expandedGroups.has(groupIdToCheck)) {
+                isVisible = false;
+                break;
+              }
+            }
+
+            if (isVisible) {
+              visibleRows.push(row);
+            }
+          }
+        } else {
+          // Non-grouped data rows are always visible
+          visibleRows.push(row);
+        }
+      }
+
+      return visibleRows;
     },
     [groupBy.length]
   );
@@ -304,9 +308,11 @@ export const CustomGroupingGrid: React.FC = () => {
   // Toggle group expansion
   const toggleGroup = useCallback((groupId: string) => {
     setGroupedData(prevData => {
-      return prevData.map(row =>
+      // Update the expanded state for the group
+      const updatedData = prevData.map(row =>
         row.isGroupRow && row.groupId === groupId ? { ...row, expanded: !row.expanded } : row
       );
+      return updatedData;
     });
   }, []);
 
@@ -337,16 +343,14 @@ export const CustomGroupingGrid: React.FC = () => {
 
         return (
           <div style={{ paddingLeft: `${paddingLeft}px` }} className="flex items-center">
-            {/* Only show toggle icon for multi-level grouping */}
-            {groupBy.length > 1 && (
-              <span
-                onClick={() => data.groupId && toggleGroup(data.groupId)}
-                className="cursor-pointer mr-2 text-blue-600 select-none"
-              >
-                {icon}
-              </span>
-            )}
-            <span className={`font-medium ${groupBy.length === 1 ? 'text-blue-700' : ''}`}>
+            {/* Show toggle icon for ALL grouping levels now */}
+            <span
+              onClick={() => data.groupId && toggleGroup(data.groupId)}
+              className="cursor-pointer mr-2 text-blue-600 select-none"
+            >
+              {icon}
+            </span>
+            <span className="font-medium text-blue-700">
               {`${data.groupValue} (${data.childCount})`}
             </span>
           </div>
@@ -354,14 +358,11 @@ export const CustomGroupingGrid: React.FC = () => {
       }
 
       // For data rows, add padding to align with groups
-      const dataRowPadding =
-        groupBy.length === 1
-          ? (data.groupLevel || 0) * 20 + 40 // More indent for single-level grouping
-          : groupBy.length * 20 + 15; // Standard indent for multi-level
+      const dataRowPadding = (data.groupLevel || 0) * 20 + 40; // More indent for data rows
 
       return <div style={{ paddingLeft: `${dataRowPadding}px` }}>{params.value}</div>;
     },
-    [groupBy.length, toggleGroup]
+    [toggleGroup]
   );
 
   // Value formatter for numeric columns
