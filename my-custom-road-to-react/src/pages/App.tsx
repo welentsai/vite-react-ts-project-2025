@@ -1,9 +1,9 @@
 import * as React from 'react';
 import axios from 'axios';
 import './App.css';
-import { List } from './components/list';
-import { SearchForm } from './components/search-form';
-import { useConfigContext } from './context/ConfigProvider';
+import { useConfigContext } from '../context/ConfigProvider';
+import { SearchForm } from '../components/search-form';
+import { List } from '../components/list';
 
 type Story = {
   objectID: number;

@@ -7,17 +7,18 @@ export type ListProps = {
 };
 
 export const List = ({ list, onRemoveItem }: ListProps) => {
-  console.log('List renders...');
+  console.log('List renders...', list);
 
   return (
     <ul>
-      {list.map(item => (
-        <Item
-          key={item.objectID}
-          item={item}
-          onRemoveItem={onRemoveItem}
-        />
-      ))}
+      {list &&
+        list.map(item => (
+          <Item
+            key={item.objectID}
+            item={item}
+            onRemoveItem={onRemoveItem}
+          />
+        ))}
     </ul>
   );
 };
