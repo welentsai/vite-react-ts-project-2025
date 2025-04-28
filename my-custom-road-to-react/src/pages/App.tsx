@@ -1,4 +1,9 @@
 import * as React from 'react';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import axios from 'axios';
 import './App.css';
 import { useConfigContext } from '../context/ConfigProvider';
@@ -14,73 +19,6 @@ type Story = {
   points: number;
 };
 
-type StoriesState = {
-  data: Story[];
-  isLoading: boolean;
-  isError: boolean;
-};
-
-type StoriesFetchInitAction = {
-  type: 'FETCH_STORIES_INIT';
-};
-
-type StoriesFetchSuccessAction = {
-  type: 'FETCH_STORIES_SUCCESS';
-  payload: Story[];
-};
-
-type StoriesFetchFailureAction = {
-  type: 'FETCH_STORIES_FAILURE';
-};
-
-type StoriesRemoveAction = {
-  type: 'REMOVE_STORY';
-  payload: Story;
-};
-
-type StoriesAction =
-  | StoriesFetchInitAction
-  | StoriesFetchSuccessAction
-  | StoriesFetchFailureAction
-  | StoriesRemoveAction;
-
-const storiesReducer = (
-  state: StoriesState,
-  action: StoriesAction
-) => {
-  switch (action.type) {
-    case 'FETCH_STORIES_INIT':
-      return {
-        ...state,
-        isLoading: true,
-        isError: false,
-      };
-    case 'FETCH_STORIES_SUCCESS':
-      return {
-        ...state,
-        isLoading: false,
-        isError: false,
-        data: action.payload,
-      };
-    case 'FETCH_STORIES_FAILURE':
-      console.log('fetch error!');
-      return {
-        ...state,
-        isLoading: false,
-        isError: true,
-      };
-    case 'REMOVE_STORY':
-      return {
-        ...state,
-        data: state.data.filter(
-          story => action.payload.objectID !== story.objectID
-        ),
-      };
-    default:
-      throw new Error();
-  }
-};
-
 const useStorageState = (key: string, initialState: string) => {
   const [value, setValue] = React.useState(
     localStorage.getItem(key) || initialState
@@ -91,6 +29,14 @@ const useStorageState = (key: string, initialState: string) => {
   }, [key, value]);
 
   return [value, setValue] as const;
+};
+
+// API service function to fetch stories
+const fetchStories = async (url: string): Promise<Story[]> => {
+  if (!url) return [];
+
+  const response = await axios.get(url);
+  return response.data.hits;
 };
 
 const App = () => {
@@ -106,60 +52,60 @@ const App = () => {
     'React'
   );
 
-  const [url, setUrl] = React.useState(
-    `${config.apiUrl}${searchTerm}`
-  );
+  const [search, setSearch] = React.useState(searchTerm);
 
-  const [stories, dispatchStories] = React.useReducer(
-    storiesReducer,
-    { data: [], isLoading: false, isError: false }
-  );
+  // Initialize the query client
+  const queryClient = useQueryClient();
 
-  const handleFetchStories = React.useCallback(async () => {
-    if (!searchTerm) return;
+  // Construct the API URL
+  const apiUrl = config?.apiUrl ? `${config.apiUrl}${search}` : '';
 
-    dispatchStories({ type: 'FETCH_STORIES_INIT' });
+  // Fetch stories with React Query
+  const {
+    data: stories = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['stories', apiUrl],
+    queryFn: () => fetchStories(apiUrl),
+    enabled: !!apiUrl, // Only run the query if we have a valid URL
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+  });
 
-    try {
-      // const config = await getConfig();
-      const result = await axios.get(config.apiUrl);
-
-      dispatchStories({
-        type: 'FETCH_STORIES_SUCCESS',
-        payload: result.data.hits,
-      });
-    } catch {
-      dispatchStories({ type: 'FETCH_STORIES_FAILURE' });
-    }
-  }, [url]);
-
-  React.useEffect(() => {
-    handleFetchStories();
-  }, [handleFetchStories]);
+  // Remove story mutation
+  const removeStoryMutation = useMutation({
+    mutationFn: (item: Story) => Promise.resolve(item), // No actual API call needed for removal
+    onSuccess: removedStory => {
+      // Update the cache by filtering out the removed story
+      queryClient.setQueryData(
+        ['stories', apiUrl],
+        (oldData: Story[] | undefined) =>
+          oldData
+            ? oldData.filter(
+                story => story.objectID !== removedStory.objectID
+              )
+            : []
+      );
+    },
+  });
 
   const handleRemoveStory = (item: Story) => {
-    dispatchStories({
-      type: 'REMOVE_STORY',
-      payload: item,
-    });
+    removeStoryMutation.mutate(item);
   };
 
   const handleSearchInput = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    // console.log('App component', 'handleChange', event.target.value);
     setSearchTerm(event.target.value);
   };
 
   const handleSearchSubmit = (
     event: React.FormEvent<HTMLFormElement>
   ) => {
-    console.log('config', config);
-    console.log('handelSubmit');
-    console.log('url', `${config?.apiUrl}${searchTerm}`);
-    setUrl(`${config.apiUrl}${searchTerm}`);
-
     event.preventDefault();
+    setSearch(searchTerm);
+    refetch(); // Explicitly refetch data with the new search term
   };
 
   // Show loading state while config is loading
@@ -192,12 +138,12 @@ const App = () => {
 
       <hr />
 
-      {stories.isError && <p>Something went wrong</p>}
+      {isError && <p>Something went wrong</p>}
 
-      {stories.isLoading ? (
+      {isLoading ? (
         <p>Loading ...</p>
       ) : (
-        <List list={stories.data} onRemoveItem={handleRemoveStory} />
+        <List list={stories} onRemoveItem={handleRemoveStory} />
       )}
     </div>
   );
