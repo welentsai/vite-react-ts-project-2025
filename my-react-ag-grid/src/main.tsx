@@ -13,7 +13,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 // import { AppTwo } from '@/components/AppTwo';
 
 import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
-import { DataGridWithSheetJS } from './components/DataGrid';
+import { DataGridWithSheetJS } from '@/components/DataGridWithSheetJs';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
