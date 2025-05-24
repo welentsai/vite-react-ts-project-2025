@@ -13,7 +13,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 // import { AppTwo } from '@/components/AppTwo';
 
 import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
-import { DataGrid } from './components/DataGrid';
+import { DataGridWithSheetJS } from './components/DataGrid';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -22,7 +22,7 @@ provideGlobalGridOptions({ theme: 'legacy' });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <DataGrid />
+    <DataGridWithSheetJS />
     {/* <AppGroupedGrid /> */}
     {/* <AppThree /> */}
     {/* <AppTwo /> */}

@@ -261,13 +261,13 @@ export const CustomGroupingGrid: React.FC = () => {
       // Second pass: add visible rows
       for (let i = 0; i < allRows.length; i++) {
         const row = allRows[i];
-        
+
         // Always show group rows
         if (row.isGroupRow) {
           result.push(row);
           continue;
         }
-        
+
         // For data rows, check if parent is expanded
         if (row.parentId) {
           if (expandedGroups.has(row.parentId)) {
@@ -290,19 +290,17 @@ export const CustomGroupingGrid: React.FC = () => {
       // Find the current group and get its expanded state
       const currentGroup = prevData.find(row => row.isGroupRow && row.groupId === groupId);
       const newExpandedState = currentGroup ? !currentGroup.expanded : false;
-      
+
       // Update the expanded state for the group
       const updatedData = prevData.map(row =>
-        row.isGroupRow && row.groupId === groupId 
-          ? { ...row, expanded: newExpandedState } 
-          : row
+        row.isGroupRow && row.groupId === groupId ? { ...row, expanded: newExpandedState } : row
       );
-      
+
       // Force grid refresh by incrementing key after state update
       setTimeout(() => {
         setGridKey(prev => prev + 1);
       }, 0);
-      
+
       return updatedData;
     });
   }, []);
@@ -311,7 +309,7 @@ export const CustomGroupingGrid: React.FC = () => {
   useEffect(() => {
     // When grouping changes, make sure all groups start as expanded
     const groupedRows = createGroupedData(originalData, groupBy);
-    
+
     // Ensure all group rows have expanded set correctly
     const updatedRows = groupedRows.map(row => {
       if (row.isGroupRow) {
@@ -319,9 +317,9 @@ export const CustomGroupingGrid: React.FC = () => {
       }
       return row;
     });
-    
+
     setGroupedData(updatedRows);
-    
+
     // Reset grid key to force a full re-render
     setGridKey(prev => prev + 1);
   }, [groupBy, createGroupedData, originalData]);
@@ -344,7 +342,7 @@ export const CustomGroupingGrid: React.FC = () => {
       if (data.isGroupRow) {
         const paddingLeft = (data.groupLevel || 0) * 20; // Indent based on level
         const isExpanded = !!data.expanded;
-        
+
         return (
           <div style={{ paddingLeft: `${paddingLeft}px` }} className="flex items-center">
             <span
