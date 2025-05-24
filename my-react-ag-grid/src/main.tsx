@@ -9,10 +9,11 @@ import './global.css';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 // import AppThree from './components/AppThree/component';
-import { AppGroupedGrid } from '@/components/AppGroupedGrid';
+// import { AppGroupedGrid } from '@/components/AppGroupedGrid';
 // import { AppTwo } from '@/components/AppTwo';
 
 import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
+import { DataGrid } from './components/DataGrid';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -21,7 +22,8 @@ provideGlobalGridOptions({ theme: 'legacy' });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppGroupedGrid />
+    <DataGrid />
+    {/* <AppGroupedGrid /> */}
     {/* <AppThree /> */}
     {/* <AppTwo /> */}
     {/* <Layout>
