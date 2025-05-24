@@ -5,7 +5,9 @@
 # Usage: ./convert_react_to_chatgpt.sh [project_directory] [output_file]
 
 PROJECT_DIR=${1:-.}
-OUTPUT_FILE=${2:-"project_for_chatgpt.txt"}
+# Get the project directory name and append .txt for default output filename
+PROJECT_NAME=$(basename "$(realpath "$PROJECT_DIR")")
+OUTPUT_FILE=${2:-"${PROJECT_NAME}.txt"}
 
 # Create or clear the output file
 > "$OUTPUT_FILE"
