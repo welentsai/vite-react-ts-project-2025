@@ -12,31 +12,33 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 // import { AppGroupedGrid } from '@/components/AppGroupedGrid';
 // import { AppTwo } from '@/components/AppTwo';
 
-import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
 import { DataGridWithSheetJS } from '@/components/DataGridWithSheetJs';
+import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
 // Mark all grids as using legacy themes
 provideGlobalGridOptions({ theme: 'legacy' });
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <DataGridWithSheetJS />
-    {/* <AppGroupedGrid /> */}
-    {/* <AppThree /> */}
-    {/* <AppTwo /> */}
-    {/* <Layout>
-      <div className="rounded-lg bg-white p-6 shadow-md">
-        <h2 className="mb-4 text-2xl font-semibold text-gray-800">
-          Welcome to the Dashboard
-        </h2>
-        <p className="text-gray-600">
-          This is an example of using the Layout component with a collapsible
-          sidebar. Try clicking the chevron icon in the sidebar to collapse or
-          expand it.
-        </p>
-      </div>
-    </Layout> */}
-  </StrictMode>
-);
+// always enable mocking
+async function enableMocking() {
+  const { worker } = await import('./mocks/browser');
+
+  // Start the worker
+  return worker.start({
+    onUnhandledRequest: 'warn',
+  });
+}
+
+enableMocking().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <DataGridWithSheetJS />
+      {/* <AppGroupedGrid /> */}
+      {/* <AppThree /> */}
+      {/* <AppTwo /> */}
+      {/* <Layout>
+      </Layout> */}
+    </StrictMode>
+  );
+});
