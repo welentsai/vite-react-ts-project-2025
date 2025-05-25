@@ -12,7 +12,8 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 // import { AppGroupedGrid } from '@/components/AppGroupedGrid';
 // import { AppTwo } from '@/components/AppTwo';
 
-import { DataGridWithSheetJS } from '@/components/DataGridWithSheetJs';
+// import { DataGridWithSheetJS } from '@/components/DataGridWithSheetJs';
+import { DataGrid } from '@/components/DataGrid';
 import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
 
 // Register all community features
@@ -33,7 +34,8 @@ async function enableMocking() {
 enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <DataGridWithSheetJS />
+      <DataGrid />
+      {/* <DataGridWithSheetJS /> */}
       {/* <AppGroupedGrid /> */}
       {/* <AppThree /> */}
       {/* <AppTwo /> */}

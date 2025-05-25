@@ -1,3 +1,4 @@
+import { apiService } from '@/services/api';
 import {
   AllCommunityModule,
   CellEditingStoppedEvent,
@@ -8,7 +9,7 @@ import {
   provideGlobalGridOptions,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -27,6 +28,8 @@ interface RowData {
 
 export const DataGrid: React.FC = () => {
   const gridApiRef = useRef<GridApi | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Column Definitions: Defines the columns to be displayed in the grid
   const [columnDefs] = useState<ColDef[]>([
@@ -97,43 +100,7 @@ export const DataGrid: React.FC = () => {
   ]);
 
   // Sample data
-  const [rowData, setRowData] = useState<RowData[]>([
-    {
-      id: 1,
-      name: 'John Doe',
-      age: 28,
-      email: 'john@example.com',
-      country: 'USA',
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      age: 32,
-      email: 'jane@example.com',
-      country: 'Canada',
-    },
-    {
-      id: 3,
-      name: 'Bob Johnson',
-      age: 45,
-      email: 'bob@example.com',
-      country: 'UK',
-    },
-    {
-      id: 4,
-      name: 'Sarah Williams',
-      age: 29,
-      email: 'sarah@example.com',
-      country: 'Australia',
-    },
-    {
-      id: 5,
-      name: 'Michael Brown',
-      age: 36,
-      email: 'michael@example.com',
-      country: 'Germany',
-    },
-  ]);
+  const [rowData, setRowData] = useState<RowData[]>([]);
 
   // Default column configuration
   const defaultColDef = {
@@ -149,6 +116,31 @@ export const DataGrid: React.FC = () => {
     email: '',
     country: '',
   });
+
+  // Load customers from API on component mount
+  useEffect(() => {
+    console.log('loading customers !!!');
+    loadCustomers();
+  }, []);
+
+  // Load customers from the mock API
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiService.getCustomers();
+
+      if (response.success && response.data) {
+        setRowData(response.data);
+      } else {
+        setError('Failed to load customers');
+      }
+    } catch (err) {
+      setError('Error loading customers: ' + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle grid ready event to get access to the grid API
   const onGridReady = (params: GridReadyEvent) => {
@@ -234,6 +226,14 @@ export const DataGrid: React.FC = () => {
       document.head.removeChild(styleEl);
     };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading customers...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
