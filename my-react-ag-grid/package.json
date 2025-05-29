@@ -12,9 +12,11 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.79.0",
     "@types/node": "^22.14.1",
     "ag-grid-community": "^33.2.4",
     "ag-grid-react": "^33.2.4",
+    "antd": "^5.25.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "xlsx": "^0.18.5"
