@@ -179,6 +179,47 @@ const validateImportedRow = (row: ImportedRowData): SourcePartConfig | null => {
   };
 };
 
+const downloadTemplate = () => {
+  try {
+    // Create sample template data
+    const templateData = [
+      {
+        'Source Part': 'SAMPLE_SP001',
+        'Bin Grade': 'A',
+        'Target Part': 'SAMPLE_TP001',
+        'Claim User': 'sample_user',
+        'Claim Time': new Date().toISOString(),
+      },
+      {
+        'Source Part': 'SAMPLE_SP001',
+        'Bin Grade': 'B',
+        'Target Part': 'SAMPLE_TP002',
+        'Claim User': 'sample_user',
+        'Claim Time': new Date().toISOString(),
+      },
+    ];
+    
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+    
+    // Auto-size columns
+    const colWidths = Object.keys(templateData[0]).map(key => ({
+      wch: Math.max(key.length, 15) + 2
+    }));
+    worksheet['!cols'] = colWidths;
+    
+    // Save file
+    XLSX.writeFile(workbook, 'config_import_template.xlsx');
+    
+    message.success('Template downloaded successfully');
+  } catch (error) {
+    message.error('Failed to download template');
+    throw error;
+  }
+};
+
 const processExcelFile = async (file: File): Promise<SourcePartConfig[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -415,11 +456,6 @@ export const useConfigOperation = () => {
 
   // Handle Excel import
   const handleImport = useCallback(async (file: File) => {
-    if (!state.isEditing) {
-      message.warning('Please enter edit mode first');
-      return false;
-    }
-
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const importedConfigs = await processExcelFile(file);
@@ -436,6 +472,12 @@ export const useConfigOperation = () => {
       }
       
       dispatch({ type: 'IMPORT_DATA', payload: importedConfigs });
+      
+      // Auto-enter edit mode if not already in edit mode
+      if (!state.isEditing) {
+        dispatch({ type: 'SET_EDITING', payload: true });
+      }
+      
       message.success(`Successfully imported ${importedConfigs.length} rows`);
       return false; // Prevent default upload behavior
     } catch (error) {
@@ -465,6 +507,15 @@ export const useConfigOperation = () => {
     }
   }, [state.configs, state.deletedRows]);
 
+  // Handle template download
+  const handleDownloadTemplate = useCallback(() => {
+    try {
+      downloadTemplate();
+    } catch (error) {
+      message.error('Failed to download template');
+    }
+  }, []);
+
   // Get row styling class
   const getRowClassName = useCallback((config: SourcePartConfig): string => {
     if (!config.id) return '';
@@ -490,6 +541,7 @@ export const useConfigOperation = () => {
     handleDiscard,
     handleImport,
     handleExport,
+    handleDownloadTemplate,
     getRowClassName,
   };
 };

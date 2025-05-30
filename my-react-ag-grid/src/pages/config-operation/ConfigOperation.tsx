@@ -11,7 +11,8 @@ import {
   DeleteOutlined,
   ImportOutlined,
   ExportOutlined,
-  CloseOutlined
+  CloseOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -36,6 +37,7 @@ const ConfigOperation: React.FC = () => {
     handleDiscard,
     handleImport,
     handleExport,
+    handleDownloadTemplate,
     getRowClassName,
   } = useConfigOperation();
 
@@ -162,13 +164,51 @@ const ConfigOperation: React.FC = () => {
   const renderActionButtons = () => {
     if (!state.isEditing) {
       return (
-        <Button 
-          icon={<EditOutlined />}
-          onClick={handleEditToggle}
-          className="border-primary-500 text-primary-500 hover:bg-primary-50"
-        >
-          Edit
-        </Button>
+        <Space>
+          {state.configs.length > 0 && (
+            <Button 
+              icon={<EditOutlined />}
+              onClick={handleEditToggle}
+              className="border-primary-500 text-primary-500 hover:bg-primary-50"
+            >
+              Edit
+            </Button>
+          )}
+          
+          <Button 
+            icon={<DownloadOutlined />}
+            onClick={handleDownloadTemplate}
+            className="border-purple-500 text-purple-500 hover:bg-purple-50"
+            title="Download Excel template"
+          >
+            Template
+          </Button>
+          
+          <Upload
+            accept=".xlsx,.xls"
+            showUploadList={false}
+            beforeUpload={handleImportFile}
+            className="inline-block"
+          >
+            <Button 
+              icon={<ImportOutlined />}
+              loading={isLoading}
+              className="border-blue-500 text-blue-500 hover:bg-blue-50"
+            >
+              Import
+            </Button>
+          </Upload>
+          
+          {state.configs.length > 0 && (
+            <Button 
+              icon={<ExportOutlined />}
+              onClick={handleExport}
+              className="border-orange-500 text-orange-500 hover:bg-orange-50"
+            >
+              Export
+            </Button>
+          )}
+        </Space>
       );
     }
 
@@ -273,48 +313,46 @@ const ConfigOperation: React.FC = () => {
           </Form>
         </Card>
 
-        {/* Data Grid */}
-        {state.configs.length > 0 && (
-          <Card 
-            className="shadow-sm"
-            title={
-              <div className="flex items-center justify-between">
-                <span>Configuration List</span>
-                {renderActionButtons()}
-              </div>
-            }
-          >
-            <div className="ag-theme-alpine h-96 w-full">
-              <AgGridReact
-                rowData={state.configs}
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                rowSelection="multiple"
-                suppressRowClickSelection={!state.isEditing}
-                onGridReady={onGridReady}
-                onSelectionChanged={onSelectionChanged}
-                onCellValueChanged={onCellValueChanged}
-                rowClassRules={rowClassRules}
-                animateRows={true}
-                enableCellTextSelection={true}
-                domLayout="normal"
-                loading={isLoading}
-                overlayLoadingTemplate="<span class='ag-overlay-loading-center'>Loading...</span>"
-                overlayNoRowsTemplate="<span class='ag-overlay-no-rows-center'>No data to display</span>"
-              />
+        {/* Data Grid - Always visible */}
+        <Card 
+          className="shadow-sm"
+          title={
+            <div className="flex items-center justify-between">
+              <span>Configuration List</span>
+              {renderActionButtons()}
             </div>
-          </Card>
-        )}
-
-        {/* No Data State */}
-        {state.configs.length === 0 && !isLoading && (
-          <Card className="py-12 text-center shadow-sm">
-            <div className="text-gray-500">
-              <p className="mb-2 text-lg">No configurations found</p>
-              <p>Enter a Source Part and click Search to view configurations</p>
-            </div>
-          </Card>
-        )}
+          }
+        >
+          <div className="ag-theme-alpine h-96 w-full">
+            <AgGridReact
+              rowData={state.configs}
+              columnDefs={columnDefs}
+              defaultColDef={defaultColDef}
+              rowSelection="multiple"
+              suppressRowClickSelection={!state.isEditing}
+              onGridReady={onGridReady}
+              onSelectionChanged={onSelectionChanged}
+              onCellValueChanged={onCellValueChanged}
+              rowClassRules={rowClassRules}
+              animateRows={true}
+              enableCellTextSelection={true}
+              domLayout="normal"
+              loading={isLoading}
+              overlayLoadingTemplate="<span class='ag-overlay-loading-center'>Loading...</span>"
+              overlayNoRowsTemplate={`
+                <div class='ag-overlay-no-rows-center' style='padding: 20px; text-align: center;'>
+                  <div style='color: #6b7280; font-size: 16px; margin-bottom: 8px;'>No configurations found</div>
+                  <div style='color: #9ca3af; font-size: 14px;'>
+                    ${state.configs.length === 0 && !state.isEditing ? 
+                      'Search for configurations or import data from Excel' : 
+                      'No data to display'
+                    }
+                  </div>
+                </div>
+              `}
+            />
+          </div>
+        </Card>
       </div>
     </div>
   );
