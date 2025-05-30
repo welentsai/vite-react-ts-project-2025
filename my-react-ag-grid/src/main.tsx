@@ -13,8 +13,10 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 // import { AppTwo } from '@/components/AppTwo';
 
 // import { DataGridWithSheetJS } from '@/components/DataGridWithSheetJs';
-import { DataGrid } from '@/components/DataGrid';
 import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
+import ConfigOperation from './pages/config-operation';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -31,16 +33,26 @@ async function enableMocking() {
   });
 }
 
+// Create a client
+const queryClient = new QueryClient();
+
 enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <DataGrid />
-      {/* <DataGridWithSheetJS /> */}
-      {/* <AppGroupedGrid /> */}
-      {/* <AppThree /> */}
-      {/* <AppTwo /> */}
-      {/* <Layout>
-      </Layout> */}
+      <QueryClientProvider client={queryClient}>
+        <ConfigOperation />
+      </QueryClientProvider>
     </StrictMode>
+
+    // <StrictMode>
+    //   <ConfigOperation />
+    //   {/* <DataGrid /> */}
+    //   {/* <DataGridWithSheetJS /> */}
+    //   {/* <AppGroupedGrid /> */}
+    //   {/* <AppThree /> */}
+    //   {/* <AppTwo /> */}
+    //   {/* <Layout>
+    //   </Layout> */}
+    // </StrictMode>
   );
 });
