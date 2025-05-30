@@ -1,0 +1,67 @@
+/* src/styles/ag-grid-custom.css */
+
+@import "tailwindcss";
+
+/* Tailwind CSS v4 theme configuration */
+@theme {
+  --color-primary-50: #e6f4ff;
+  --color-primary-100: #bae0ff;
+  --color-primary-200: #91caff;
+  --color-primary-300: #69b1ff;
+  --color-primary-400: #4096ff;
+  --color-primary-500: #1677ff;
+  --color-primary-600: #0958d9;
+  --color-primary-700: #003eb3;
+  --color-primary-800: #002c8c;
+  --color-primary-900: #001d66;
+  
+  /* Row state colors */
+  --color-row-deleted: #ffebee;
+  --color-row-deleted-hover: #ffcdd2;
+  --color-row-deleted-selected: #f8bbd9;
+  
+  --color-row-new: #e8f5e8;
+  --color-row-new-hover: #c8e6c9;
+  --color-row-new-selected: #a5d6a7;
+  
+  --color-row-modified: #fff8e1;
+  --color-row-modified-hover: #fff176;
+  --color-row-modified-selected: #fff59d;
+}
+
+/* ag-Grid specific styling with direct CSS */
+.ag-theme-alpine .ag-row.row-deleted {
+  background-color: var(--color-row-deleted) !important;
+}
+
+.ag-theme-alpine .ag-row.row-new {
+  background-color: var(--color-row-new) !important;
+}
+
+.ag-theme-alpine .ag-row.row-modified {
+  background-color: var(--color-row-modified) !important;
+}
+
+.ag-theme-alpine .ag-row.row-deleted:hover {
+  background-color: var(--color-row-deleted-hover) !important;
+}
+
+.ag-theme-alpine .ag-row.row-new:hover {
+  background-color: var(--color-row-new-hover) !important;
+}
+
+.ag-theme-alpine .ag-row.row-modified:hover {
+  background-color: var(--color-row-modified-hover) !important;
+}
+
+.ag-theme-alpine .ag-row.row-deleted.ag-row-selected {
+  background-color: var(--color-row-deleted-selected) !important;
+}
+
+.ag-theme-alpine .ag-row.row-new.ag-row-selected {
+  background-color: var(--color-row-new-selected) !important;
+}
+
+.ag-theme-alpine .ag-row.row-modified.ag-row-selected {
+  background-color: var(--color-row-modified-selected) !important;
+}
