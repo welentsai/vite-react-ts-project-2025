@@ -1,10 +1,18 @@
 // src/pages/ConfigOperation/ConfigOperation.tsx
 
 import React, { useMemo, useCallback } from 'react';
-import { Form, Input, Button, Card, Space, Modal, Typography } from 'antd';
+import { Form, Input, Button, Card, Space, Modal, Typography, Upload } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent } from 'ag-grid-community';
-import { EditOutlined, SaveOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { 
+  EditOutlined, 
+  SaveOutlined, 
+  PlusOutlined, 
+  DeleteOutlined,
+  ImportOutlined,
+  ExportOutlined,
+  CloseOutlined
+} from '@ant-design/icons';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import '@/styles/ag-grid-custom.css';
@@ -25,6 +33,10 @@ const ConfigOperation: React.FC = () => {
     handleDeleteRow,
     handleSave,
     handleSelectionChange,
+    handleDiscard,
+    handleImport,
+    handleExport,
+    getRowClassName,
   } = useConfigOperation();
 
   const [form] = Form.useForm<QueryFormData>();
@@ -56,6 +68,11 @@ const ConfigOperation: React.FC = () => {
     }
   }, [handleRowUpdate]);
 
+  // Handle import file
+  const handleImportFile = useCallback((file: File) => {
+    return handleImport(file);
+  }, [handleImport]);
+
   // Row class rules for styling based on row state
   const rowClassRules = useMemo(() => ({
     'row-deleted': (params: any) => {
@@ -77,6 +94,8 @@ const ConfigOperation: React.FC = () => {
       editable: state.isEditing,
       flex: 1,
       minWidth: 150,
+      headerCheckboxSelection: state.isEditing,
+      checkboxSelection: state.isEditing,
     },
     {
       field: 'binGrade',
@@ -139,6 +158,84 @@ const ConfigOperation: React.FC = () => {
     showErrorModal();
   }, [showErrorModal]);
 
+  // Render action buttons based on edit mode
+  const renderActionButtons = () => {
+    if (!state.isEditing) {
+      return (
+        <Button 
+          icon={<EditOutlined />}
+          onClick={handleEditToggle}
+          className="border-primary-500 text-primary-500 hover:bg-primary-50"
+        >
+          Edit
+        </Button>
+      );
+    }
+
+    return (
+      <Space>
+        <Button 
+          icon={<PlusOutlined />}
+          onClick={handleAddRow}
+          className="border-green-500 text-green-500 hover:bg-green-50"
+        >
+          Add
+        </Button>
+        
+        <Button 
+          icon={<DeleteOutlined />}
+          onClick={handleDeleteRow}
+          disabled={state.selectedRows.length === 0}
+          className="border-red-500 text-red-500 hover:bg-red-50 disabled:border-gray-300 disabled:text-gray-400"
+        >
+          Delete
+        </Button>
+        
+        <Button 
+          icon={<SaveOutlined />}
+          type="primary"
+          onClick={handleSave}
+          loading={isSaving}
+          className="border-primary-500 bg-primary-500 hover:border-primary-600 hover:bg-primary-600"
+        >
+          Save
+        </Button>
+        
+        <Upload
+          accept=".xlsx,.xls"
+          showUploadList={false}
+          beforeUpload={handleImportFile}
+          className="inline-block"
+        >
+          <Button 
+            icon={<ImportOutlined />}
+            loading={isLoading}
+            className="border-blue-500 text-blue-500 hover:bg-blue-50"
+          >
+            Import
+          </Button>
+        </Upload>
+        
+        <Button 
+          icon={<ExportOutlined />}
+          onClick={handleExport}
+          disabled={state.configs.length === 0}
+          className="border-orange-500 text-orange-500 hover:bg-orange-50 disabled:border-gray-300 disabled:text-gray-400"
+        >
+          Export
+        </Button>
+        
+        <Button 
+          icon={<CloseOutlined />}
+          onClick={handleDiscard}
+          className="border-gray-500 text-gray-500 hover:bg-gray-50"
+        >
+          Discard
+        </Button>
+      </Space>
+    );
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mx-auto max-w-7xl">
@@ -183,44 +280,7 @@ const ConfigOperation: React.FC = () => {
             title={
               <div className="flex items-center justify-between">
                 <span>Configuration List</span>
-                <Space>
-                  {!state.isEditing ? (
-                    <Button 
-                      icon={<EditOutlined />}
-                      onClick={handleEditToggle}
-                      className="border-primary-500 text-primary-500 hover:bg-primary-50"
-                    >
-                      Edit
-                    </Button>
-                  ) : (
-                    <>
-                      <Button 
-                        icon={<PlusOutlined />}
-                        onClick={handleAddRow}
-                        className="border-green-500 text-green-500 hover:bg-green-50"
-                      >
-                        Add
-                      </Button>
-                      <Button 
-                        icon={<DeleteOutlined />}
-                        onClick={handleDeleteRow}
-                        disabled={state.selectedRows.length === 0}
-                        className="border-red-500 text-red-500 hover:bg-red-50 disabled:border-gray-300 disabled:text-gray-400"
-                      >
-                        Delete
-                      </Button>
-                      <Button 
-                        icon={<SaveOutlined />}
-                        type="primary"
-                        onClick={handleSave}
-                        loading={isSaving}
-                        className="border-primary-500 bg-primary-500 hover:border-primary-600 hover:bg-primary-600"
-                      >
-                        Save
-                      </Button>
-                    </>
-                  )}
-                </Space>
+                {renderActionButtons()}
               </div>
             }
           >
@@ -238,6 +298,9 @@ const ConfigOperation: React.FC = () => {
                 animateRows={true}
                 enableCellTextSelection={true}
                 domLayout="normal"
+                loading={isLoading}
+                overlayLoadingTemplate="<span class='ag-overlay-loading-center'>Loading...</span>"
+                overlayNoRowsTemplate="<span class='ag-overlay-no-rows-center'>No data to display</span>"
               />
             </div>
           </Card>

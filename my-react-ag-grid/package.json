@@ -17,8 +17,10 @@
     "ag-grid-community": "^33.2.4",
     "ag-grid-react": "^33.2.4",
     "antd": "^5.25.3",
+    "fp-ts": "^2.16.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "ts-pattern": "^5.7.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
