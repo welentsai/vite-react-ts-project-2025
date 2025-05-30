@@ -10,7 +10,7 @@ import {
   ConfigSaveRequest,
   QueryFormData,
   SourcePartConfig,
-} from './type';
+} from './types';
 
 const initialState: ConfigOperationState = {
   configs: [],

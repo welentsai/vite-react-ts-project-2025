@@ -9,7 +9,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import '@/styles/ag-grid-custom.css';
 import { useConfigOperation } from './hook';
-import { QueryFormData } from './type';
+import { QueryFormData } from './types';
 
 const { Title } = Typography;
 
