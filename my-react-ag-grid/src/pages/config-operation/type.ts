@@ -1,5 +1,3 @@
-// src/pages/ConfigOperation/types.ts
-
 export interface SourcePartConfig {
   id?: string; // Added for ag-Grid row identification
   sourcePart: string;
@@ -15,6 +13,7 @@ export interface QueryFormData {
 
 export interface ConfigOperationState {
   configs: SourcePartConfig[];
+  originalConfigs: SourcePartConfig[]; // Store original data for discard functionality
   isLoading: boolean;
   isEditing: boolean;
   selectedRows: SourcePartConfig[];
@@ -33,6 +32,8 @@ export type ConfigOperationAction =
   | { type: 'ADD_ROW'; payload: SourcePartConfig }
   | { type: 'MARK_FOR_DELETION'; payload: string }
   | { type: 'RESET_CHANGES' }
+  | { type: 'DISCARD_CHANGES' }
+  | { type: 'IMPORT_DATA'; payload: SourcePartConfig[] }
   | { type: 'SET_ERROR'; payload: string | null };
 
 export interface ConfigApiResponse {
@@ -43,7 +44,13 @@ export interface ConfigApiResponse {
 
 export interface ConfigSaveRequest {
   sourcePart: string;
-  added: SourcePartConfig[];
-  modified: SourcePartConfig[];
-  deleted: string[];
+  configs: SourcePartConfig[]; // Send all configs excluding deleted ones
+}
+
+export interface ImportedRowData {
+  sourcePart?: string;
+  binGrade?: string;
+  targetPart?: string;
+  claimUser?: string;
+  claimTime?: string;
 }
