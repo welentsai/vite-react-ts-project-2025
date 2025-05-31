@@ -65,3 +65,25 @@
 .ag-theme-alpine .ag-row.row-modified.ag-row-selected {
   background-color: var(--color-row-modified-selected) !important;
 }
+
+/* Antd Card styling - remove rounded corners */
+.config-card.ant-card {
+  border-radius: 0 !important;
+}
+
+.config-card .ant-card-head {
+  border-radius: 0 !important;
+}
+
+.config-card .ant-card-body {
+  border-radius: 0 !important;
+}
+
+/* Also remove rounded corners from nested elements if needed */
+.config-card .ant-card-head-title {
+  border-radius: 0 !important;
+}
+
+.config-card .ant-card-extra {
+  border-radius: 0 !important;
+}

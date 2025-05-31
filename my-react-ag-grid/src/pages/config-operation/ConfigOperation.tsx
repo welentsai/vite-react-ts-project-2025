@@ -282,7 +282,7 @@ const ConfigOperation: React.FC = () => {
         <Title level={2} className="mb-6">Config Operation</Title>
         
         {/* Query Form */}
-        <Card className="mb-6 shadow-sm">
+        <Card className="mb-6 shadow-sm config-card">
           <Form
             form={form}
             layout="inline"
@@ -315,7 +315,7 @@ const ConfigOperation: React.FC = () => {
 
         {/* Data Grid - Always visible */}
         <Card 
-          className="shadow-sm"
+          className="shadow-sm config-card"
           title={
             <div className="flex items-center justify-between">
               <span>Configuration List</span>
