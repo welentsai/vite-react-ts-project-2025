@@ -16,7 +16,7 @@ import {
 } from '@ant-design/icons';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import '@/styles/ag-grid-custom.css';
+import './ag-grid-custom.css';
 import { useConfigOperation } from './hook';
 import { QueryFormData } from './types';
 
@@ -328,8 +328,6 @@ const ConfigOperation: React.FC = () => {
               rowData={state.configs}
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
-              rowSelection="multiple"
-              suppressRowClickSelection={!state.isEditing}
               onGridReady={onGridReady}
               onSelectionChanged={onSelectionChanged}
               onCellValueChanged={onCellValueChanged}
