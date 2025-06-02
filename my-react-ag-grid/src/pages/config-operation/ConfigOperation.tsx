@@ -96,8 +96,8 @@ const ConfigOperation: React.FC = () => {
       editable: state.isEditing,
       flex: 1,
       minWidth: 150,
-      headerCheckboxSelection: state.isEditing,
-      checkboxSelection: state.isEditing,
+      // headerCheckboxSelection: state.isEditing,
+      // checkboxSelection: state.isEditing,
     },
     {
       field: 'binGrade',
@@ -331,6 +331,7 @@ const ConfigOperation: React.FC = () => {
               onGridReady={onGridReady}
               onSelectionChanged={onSelectionChanged}
               onCellValueChanged={onCellValueChanged}
+              rowSelection={{mode:'singleRow'}}
               rowClassRules={rowClassRules}
               animateRows={true}
               enableCellTextSelection={true}

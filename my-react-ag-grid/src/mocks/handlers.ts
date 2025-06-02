@@ -1,4 +1,5 @@
 import { SourcePartConfig } from '@/pages/config-operation';
+import { ConfigSaveRequest } from '@/pages/config-operation/types';
 import { http, HttpResponse } from 'msw';
 
 // Define the customer interface
@@ -71,7 +72,7 @@ const mockCustomers: Customer[] = [
   },
 ];
 
-const mockConfigs: SourcePartConfig[] = [
+let mockConfigs: SourcePartConfig[] = [
   {
     id: '1',
     sourcePart: 'aaa',
@@ -182,7 +183,7 @@ export const handlers = [
     });
   }),
 
-  // GET /api/v1/customers
+  // GET /api/v1/configs
   http.get('http://example.com/api/configs', ({request}) => {
     const url = new URL(request.url)
     const sourcePart = url.searchParams.get('sourcePart')
@@ -196,8 +197,23 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       data: filteredConfigs,
-      total: mockCustomers.length,
+      total: mockConfigs.length,
       message: 'Success to fetch config !'
     });
+  }),
+
+  // POST /api/v1/configs
+  http.post('http://example.com/api/configs', async ({ request }) => {
+    const saveRequest = (await request.json()) as ConfigSaveRequest;
+
+    console.log('mock post configs', saveRequest);
+
+    mockConfigs = saveRequest.configs;
+
+    return HttpResponse.json({
+      success: true,
+      data: mockConfigs,
+      message: 'Customer created successfully',
+    }, {status: 201});
   }),
 ];
