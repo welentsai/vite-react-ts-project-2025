@@ -162,122 +162,128 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
   });
 };
 
-export const useExcel = () => {
-  const downloadTemplate = useCallback(async () => {
-    try {
-      const templateData = createTemplateData();
-      const workbook = await createWorkbook(templateData, 'Template');
-      
-      // Write to buffer and create download
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create download link and trigger download
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'config_import_template.xlsx';
-      a.click();
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
-      
-      message.success('Template downloaded successfully');
-    } catch (error) {
-      message.error('Failed to download template');
-      throw error;
+// Utility functions that can be tested directly
+export const downloadTemplate = async () => {
+  try {
+    const templateData = createTemplateData();
+    const workbook = await createWorkbook(templateData, 'Template');
+    
+    // Write to buffer and create download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create download link and trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'config_import_template.xlsx';
+    a.click();
+    
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    
+    message.success('Template downloaded successfully');
+  } catch (error) {
+    message.error('Failed to download template');
+    throw error;
+  }
+};
+
+export const exportToExcel = async (
+  configs: SourcePartConfig[], 
+  filename: string = 'configs'
+) => {
+  try {
+    if (configs.length === 0) {
+      message.warning('No data to export');
+      return;
     }
-  }, []);
 
-  const exportToExcel = useCallback(async (
-    configs: SourcePartConfig[], 
-    filename: string = 'configs'
-  ) => {
-    try {
-      if (configs.length === 0) {
-        message.warning('No data to export');
-        return;
-      }
+    // Prepare data for export (exclude internal id and format dates)
+    const exportData = configs.map(config => ({
+      'Source Part': config.sourcePart,
+      'Bin Grade': config.binGrade,
+      'Target Part': config.targetPart,
+      'Claim User': config.claimUser,
+      'Claim Time': config.claimTime ? new Date(config.claimTime).toLocaleString() : '',
+    }));
+    
+    const workbook = await createWorkbook(exportData, 'Configurations');
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().split('T')[0];
+    const finalFilename = `${filename}_${timestamp}.xlsx`;
+    
+    // Write to buffer and create download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create download link and trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = finalFilename;
+    a.click();
+    
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    
+    message.success(`Data exported to ${finalFilename}`);
+  } catch (error) {
+    message.error('Failed to export data to Excel');
+    throw error;
+  }
+};
 
-      // Prepare data for export (exclude internal id and format dates)
-      const exportData = configs.map(config => ({
-        'Source Part': config.sourcePart,
-        'Bin Grade': config.binGrade,
-        'Target Part': config.targetPart,
-        'Claim User': config.claimUser,
-        'Claim Time': config.claimTime ? new Date(config.claimTime).toLocaleString() : '',
-      }));
-      
-      const workbook = await createWorkbook(exportData, 'Configurations');
-      
-      // Generate filename with timestamp
-      const timestamp = new Date().toISOString().split('T')[0];
-      const finalFilename = `${filename}_${timestamp}.xlsx`;
-      
-      // Write to buffer and create download
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create download link and trigger download
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = finalFilename;
-      a.click();
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
-      
-      message.success(`Data exported to ${finalFilename}`);
-    } catch (error) {
-      message.error('Failed to export data to Excel');
-      throw error;
-    }
-  }, []);
+export const importFromExcel = async (file: File): Promise<SourcePartConfig[]> => {
+  try {
+    const importedConfigs = await processExcelFile(file);
+    message.success(`Successfully processed ${importedConfigs.length} rows from Excel file`);
+    return importedConfigs;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Import failed';
+    message.error(errorMessage);
+    throw error;
+  }
+};
 
-  const importFromExcel = useCallback(async (file: File): Promise<SourcePartConfig[]> => {
-    try {
-      const importedConfigs = await processExcelFile(file);
-      message.success(`Successfully processed ${importedConfigs.length} rows from Excel file`);
-      return importedConfigs;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Import failed';
-      message.error(errorMessage);
-      throw error;
-    }
-  }, []);
-
-  const validateImportConsistency = useCallback((
-    existingConfigs: SourcePartConfig[],
-    importedConfigs: SourcePartConfig[]
-  ): { isValid: boolean; error?: string } => {
-    // Validate source part consistency if there are existing configs
-    if (existingConfigs.length > 0) {
-      const currentSourcePart = existingConfigs[0]?.sourcePart;
-      const importedSourceParts = new Set(importedConfigs.map(config => config.sourcePart));
-      
-      if (importedSourceParts.size > 1) {
-        return {
-          isValid: false,
-          error: 'All imported rows must have the same source part'
-        };
-      }
-      
-      if (currentSourcePart && !importedSourceParts.has(currentSourcePart)) {
-        return {
-          isValid: false,
-          error: 'Imported data must have the same source part as existing data'
-        };
-      }
+export const validateImportConsistency = (
+  existingConfigs: SourcePartConfig[],
+  importedConfigs: SourcePartConfig[]
+): { isValid: boolean; error?: string } => {
+  // Validate source part consistency if there are existing configs
+  if (existingConfigs.length > 0) {
+    const currentSourcePart = existingConfigs[0]?.sourcePart;
+    const importedSourceParts = new Set(importedConfigs.map(config => config.sourcePart));
+    
+    if (importedSourceParts.size > 1) {
+      return {
+        isValid: false,
+        error: 'All imported rows must have the same source part'
+      };
     }
     
-    return { isValid: true };
-  }, []);
+    if (currentSourcePart && !importedSourceParts.has(currentSourcePart)) {
+      return {
+        isValid: false,
+        error: 'Imported data must have the same source part as existing data'
+      };
+    }
+  }
+  
+  return { isValid: true };
+};
+
+export const useExcel = () => {
+  const downloadTemplateCallback = useCallback(downloadTemplate, []);
+  const exportToExcelCallback = useCallback(exportToExcel, []);
+  const importFromExcelCallback = useCallback(importFromExcel, []);
+  const validateImportConsistencyCallback = useCallback(validateImportConsistency, []);
 
   return {
-    downloadTemplate,
-    exportToExcel,
-    importFromExcel,
-    validateImportConsistency,
+    downloadTemplate: downloadTemplateCallback,
+    exportToExcel: exportToExcelCallback,
+    importFromExcel: importFromExcelCallback,
+    validateImportConsistency: validateImportConsistencyCallback,
   };
 };
