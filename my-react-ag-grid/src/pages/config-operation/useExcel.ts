@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { message } from 'antd';
+import axios from 'axios';
 import ExcelJS from 'exceljs';
 import { SourcePartConfig, ImportedRowData } from './types';
 
@@ -21,24 +22,7 @@ const validateImportedRow = (row: ImportedRowData): SourcePartConfig | null => {
   };
 };
 
-const createTemplateData = () => [
-  {
-    'Source Part': 'SAMPLE_SP001',
-    'Bin Grade': 'A',
-    'Target Part': 'SAMPLE_TP001',
-    'Claim User': 'sample_user',
-    'Claim Time': new Date().toISOString(),
-  },
-  {
-    'Source Part': 'SAMPLE_SP001',
-    'Bin Grade': 'B',
-    'Target Part': 'SAMPLE_TP002',
-    'Claim User': 'sample_user',
-    'Claim Time': new Date().toISOString(),
-  },
-];
-
-const createWorkbook = async (data: any[], sheetName: string = 'Sheet1') => {
+const createWorkbook = async (data: Record<string, unknown>[], sheetName: string = 'Sheet1') => {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Config Operation Application';
   workbook.created = new Date();
@@ -109,10 +93,10 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
         }
         
         // Extract data from worksheet
-        const jsonData: any[][] = [];
+        const jsonData: unknown[][] = [];
         
-        worksheet.eachRow((row, rowNumber) => {
-          const rowData: any[] = [];
+        worksheet.eachRow((row) => {
+          const rowData: unknown[] = [];
           row.eachCell((cell, colNumber) => {
             rowData[colNumber - 1] = cell.value;
           });
@@ -129,11 +113,11 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
         const headers = ['sourcePart', 'binGrade', 'targetPart', 'claimUser', 'claimTime'];
         
         const processedData: ImportedRowData[] = dataRows
-          .filter(row => row.some((cell: any) => cell !== null && cell !== undefined && cell !== '')) // Filter out empty rows
-          .map((row: any[]) => {
+          .filter(row => row.some((cell: unknown) => cell !== null && cell !== undefined && cell !== '')) // Filter out empty rows
+          .map((row: unknown[]) => {
             const obj: ImportedRowData = {};
             headers.forEach((header, index) => {
-              obj[header as keyof ImportedRowData] = row[index] || '';
+              obj[header as keyof ImportedRowData] = String(row[index] || '');
             });
             return obj;
           });
@@ -149,7 +133,7 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
         }
         
         resolve(validConfigs);
-      } catch (error) {
+      } catch {
         reject(new Error('Failed to parse Excel file. Please check the file format.'));
       }
     };
@@ -165,15 +149,13 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
 // Utility functions that can be tested directly
 export const downloadTemplate = async () => {
   try {
-    const templateData = createTemplateData();
-    const workbook = await createWorkbook(templateData, 'Template');
-    
-    // Write to buffer and create download
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
+    // Fetch the template file from public/templates directory using axios
+    const response = await axios.get('/templates/config_import_template.xlsx', {
+      responseType: 'blob',
+    });
     
     // Create download link and trigger download
+    const url = window.URL.createObjectURL(response.data);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'config_import_template.xlsx';

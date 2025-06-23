@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { message } from 'antd';
+import axios from 'axios';
 import { 
   downloadTemplate, 
   exportToExcel, 
@@ -16,6 +17,14 @@ vi.mock('antd', () => ({
     warning: vi.fn(),
   },
 }));
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+const mockedAxios = vi.mocked(axios, true);
 
 // Mock ExcelJS
 const mockWorksheet = {
@@ -110,34 +119,107 @@ describe('Excel Utilities', () => {
   });
 
   describe('downloadTemplate', () => {
-    test('should successfully download template', async () => {
+    const mockBlob = new Blob(['mock-excel-data'], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+
+    beforeEach(() => {
+      mockedAxios.get.mockResolvedValue({
+        data: mockBlob,
+        status: 200,
+        statusText: 'OK',
+      });
+    });
+
+    test('should successfully download template from public/templates directory using axios', async () => {
       await downloadTemplate();
 
-      expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Template');
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-      expect(mockWorkbook.xlsx.writeBuffer).toHaveBeenCalled();
-      expect(window.URL.createObjectURL).toHaveBeenCalled();
+      expect(mockedAxios.get).toHaveBeenCalledWith('/templates/config_import_template.xlsx', {
+        responseType: 'blob',
+      });
+      expect(window.URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
       expect(document.createElement).toHaveBeenCalledWith('a');
       expect(mockClick).toHaveBeenCalled();
       expect(window.URL.revokeObjectURL).toHaveBeenCalled();
       expect(message.success).toHaveBeenCalledWith('Template downloaded successfully');
     });
 
-    test('should handle download template error', async () => {
-      mockWorkbook.xlsx.writeBuffer.mockRejectedValue(new Error('Write failed'));
+    test('should handle axios error with 404 status', async () => {
+      const axiosError = {
+        response: {
+          status: 404,
+          statusText: 'Not Found',
+        },
+        message: 'Request failed with status code 404',
+      };
+      mockedAxios.get.mockRejectedValue(axiosError);
       
-      await expect(downloadTemplate()).rejects.toThrow('Write failed');
+      await expect(downloadTemplate()).rejects.toEqual(axiosError);
       expect(message.error).toHaveBeenCalledWith('Failed to download template');
     });
 
-    test('should create template with correct data structure', async () => {
+    test('should handle axios error with 500 status', async () => {
+      const axiosError = {
+        response: {
+          status: 500,
+          statusText: 'Internal Server Error',
+        },
+        message: 'Request failed with status code 500',
+      };
+      mockedAxios.get.mockRejectedValue(axiosError);
+      
+      await expect(downloadTemplate()).rejects.toEqual(axiosError);
+      expect(message.error).toHaveBeenCalledWith('Failed to download template');
+    });
+
+    test('should handle network error', async () => {
+      const networkError = new Error('Network error');
+      mockedAxios.get.mockRejectedValue(networkError);
+      
+      await expect(downloadTemplate()).rejects.toThrow('Network error');
+      expect(message.error).toHaveBeenCalledWith('Failed to download template');
+    });
+
+    test('should handle timeout error', async () => {
+      const timeoutError = {
+        code: 'ECONNABORTED',
+        message: 'timeout of 5000ms exceeded',
+      };
+      mockedAxios.get.mockRejectedValue(timeoutError);
+      
+      await expect(downloadTemplate()).rejects.toEqual(timeoutError);
+      expect(message.error).toHaveBeenCalledWith('Failed to download template');
+    });
+
+    test('should set correct download filename', async () => {
+      const mockAnchor = {
+        href: '',
+        download: '',
+        click: mockClick,
+      };
+      
+      (document.createElement as ReturnType<typeof vi.fn>).mockReturnValue(mockAnchor);
+      
       await downloadTemplate();
 
-      // Verify addRow was called with headers and data rows
-      expect(mockWorksheet.addRow).toHaveBeenCalledTimes(3); // 1 header + 2 data rows
+      expect(mockAnchor.download).toBe('config_import_template.xlsx');
+    });
+
+    test('should clean up URL after download', async () => {
+      const mockUrl = 'mock-blob-url';
+      (window.URL.createObjectURL as ReturnType<typeof vi.fn>).mockReturnValue(mockUrl);
       
-      // Verify worksheet styling was applied
-      expect(mockWorksheet.getRow).toHaveBeenCalledWith(1);
+      await downloadTemplate();
+
+      expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
+    });
+
+    test('should use correct axios configuration', async () => {
+      await downloadTemplate();
+
+      expect(mockedAxios.get).toHaveBeenCalledWith('/templates/config_import_template.xlsx', {
+        responseType: 'blob',
+      });
     });
   });
 
