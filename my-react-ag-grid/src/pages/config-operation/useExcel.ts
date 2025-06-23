@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { message } from 'antd';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { SourcePartConfig, ImportedRowData } from './types';
 
 // Excel utility functions
@@ -38,19 +38,50 @@ const createTemplateData = () => [
   },
 ];
 
-const createWorkbook = (data: any[], sheetName: string = 'Sheet1') => {
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+const createWorkbook = async (data: any[], sheetName: string = 'Sheet1') => {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Config Operation Application';
+  workbook.created = new Date();
+  workbook.modified = new Date();
   
-  // Auto-size columns
-  const colWidths = Object.keys(data[0] || {}).map(key => ({
-    wch: Math.max(
-      key.length,
-      ...data.map(row => String(row[key as keyof typeof row] || '').length)
-    ) + 2
-  }));
-  worksheet['!cols'] = colWidths;
+  const worksheet = workbook.addWorksheet(sheetName);
+  
+  if (data.length > 0) {
+    // Add headers
+    const headers = Object.keys(data[0]);
+    worksheet.addRow(headers);
+    
+    // Add data rows
+    data.forEach(row => {
+      const values = headers.map(header => row[header]);
+      worksheet.addRow(values);
+    });
+    
+    // Style the header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
+    });
+    
+    // Auto-size columns
+    headers.forEach((header, i) => {
+      let maxLength = header.length;
+      
+      // Check data length in each column
+      data.forEach(row => {
+        const cellValue = String(row[header] || '');
+        maxLength = Math.max(maxLength, cellValue.length);
+      });
+      
+      const col = worksheet.getColumn(i + 1);
+      col.width = maxLength + 2;
+    });
+  }
   
   return workbook;
 };
@@ -59,28 +90,34 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const data = e.target?.result;
+        if (!data) {
+          reject(new Error('Failed to read file content'));
+          return;
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(data as ArrayBuffer);
         
         // Get the first worksheet
-        const firstSheetName = workbook.SheetNames[0];
-        if (!firstSheetName) {
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) {
           reject(new Error('No worksheets found in the file'));
           return;
         }
         
-        const worksheet = workbook.Sheets[firstSheetName];
+        // Extract data from worksheet
+        const jsonData: any[][] = [];
         
-        // Try to read with headers first
-        let jsonData: any[];
-        try {
-          jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-        } catch (error) {
-          reject(new Error('Failed to parse Excel file. Please check the file format.'));
-          return;
-        }
+        worksheet.eachRow((row, rowNumber) => {
+          const rowData: any[] = [];
+          row.eachCell((cell, colNumber) => {
+            rowData[colNumber - 1] = cell.value;
+          });
+          jsonData.push(rowData);
+        });
         
         if (jsonData.length < 2) {
           reject(new Error('Excel file must contain at least a header row and one data row.'));
@@ -88,11 +125,11 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
         }
         
         // Skip header row and convert array format to object format
-        const dataRows = jsonData.slice(1) as any[];
+        const dataRows = jsonData.slice(1);
         const headers = ['sourcePart', 'binGrade', 'targetPart', 'claimUser', 'claimTime'];
         
         const processedData: ImportedRowData[] = dataRows
-          .filter(row => row.some((cell: any) => cell !== '')) // Filter out empty rows
+          .filter(row => row.some((cell: any) => cell !== null && cell !== undefined && cell !== '')) // Filter out empty rows
           .map((row: any[]) => {
             const obj: ImportedRowData = {};
             headers.forEach((header, index) => {
@@ -126,13 +163,25 @@ const processExcelFile = (file: File): Promise<SourcePartConfig[]> => {
 };
 
 export const useExcel = () => {
-  const downloadTemplate = useCallback(() => {
+  const downloadTemplate = useCallback(async () => {
     try {
       const templateData = createTemplateData();
-      const workbook = createWorkbook(templateData, 'Template');
+      const workbook = await createWorkbook(templateData, 'Template');
       
-      // Save file
-      XLSX.writeFile(workbook, 'config_import_template.xlsx');
+      // Write to buffer and create download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create download link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'config_import_template.xlsx';
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      
       message.success('Template downloaded successfully');
     } catch (error) {
       message.error('Failed to download template');
@@ -140,7 +189,7 @@ export const useExcel = () => {
     }
   }, []);
 
-  const exportToExcel = useCallback((
+  const exportToExcel = useCallback(async (
     configs: SourcePartConfig[], 
     filename: string = 'configs'
   ) => {
@@ -159,14 +208,26 @@ export const useExcel = () => {
         'Claim Time': config.claimTime ? new Date(config.claimTime).toLocaleString() : '',
       }));
       
-      const workbook = createWorkbook(exportData, 'Configurations');
+      const workbook = await createWorkbook(exportData, 'Configurations');
       
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().split('T')[0];
       const finalFilename = `${filename}_${timestamp}.xlsx`;
       
-      // Save file
-      XLSX.writeFile(workbook, finalFilename);
+      // Write to buffer and create download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create download link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = finalFilename;
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      
       message.success(`Data exported to ${finalFilename}`);
     } catch (error) {
       message.error('Failed to export data to Excel');
