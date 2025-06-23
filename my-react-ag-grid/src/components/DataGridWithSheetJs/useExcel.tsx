@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 // Define specific types instead of using 'any'
 type CellValue = string | number | boolean | null | undefined;
@@ -43,52 +43,61 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
       setError(null);
 
       try {
-        // Create worksheet data
-        const wsData = [headers, ...sampleData];
-
-        // If no sample data provided, add some empty rows
-        if (sampleData.length === 0) {
+        // Create a new workbook
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Data Grid Application';
+        workbook.created = new Date();
+        workbook.modified = new Date();
+        
+        // Add a worksheet
+        const worksheet = workbook.addWorksheet('Template');
+        
+        // Add header row
+        worksheet.addRow(headers);
+        
+        // Add sample data rows
+        if (sampleData.length > 0) {
+          sampleData.forEach(row => {
+            worksheet.addRow(row);
+          });
+        } else {
+          // If no sample data provided, add some empty rows
           for (let i = 0; i < 5; i++) {
-            wsData.push(new Array(headers.length).fill(''));
+            worksheet.addRow(new Array(headers.length).fill(''));
           }
         }
-
-        console.log(sampleData);
-
-        // Create worksheet
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-
+        
+        // Style the header row
+        const headerRow = worksheet.getRow(1);
+        headerRow.eachCell((cell) => {
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF4472C4' }
+          };
+          cell.alignment = { horizontal: 'center' };
+        });
+        
         // Set column widths
-        const colWidths = headers.map(header => ({ wch: Math.max(header.length + 2, 15) }));
-        ws['!cols'] = colWidths;
-
-        // Style the header row (limited styling in SheetJS Community Edition)
-        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const headerCell = XLSX.utils.encode_cell({ r: 0, c: C });
-          if (ws[headerCell]) {
-            ws[headerCell].s = {
-              font: { bold: true },
-              fill: { fgColor: { rgb: '4472C4' } },
-              alignment: { horizontal: 'center' },
-            };
-          }
-        }
-
-        // Create workbook and add worksheet
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Template');
-
-        // Set workbook properties
-        wb.Props = {
-          Title: 'Data Template',
-          Subject: 'Excel Template',
-          Author: 'Data Grid Application',
-          CreatedDate: new Date(),
-        };
-
-        // Write and download file
-        XLSX.writeFile(wb, filename);
+        headers.forEach((header, i) => {
+          const col = worksheet.getColumn(i + 1);
+          col.width = Math.max(header.length + 2, 15);
+        });
+        
+        // Write to buffer and create download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create download link and trigger download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to create template';
         setError(errorMessage);
@@ -128,49 +137,67 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
 
         const reader = new FileReader();
 
-        reader.onload = e => {
+        reader.onload = async (e) => {
           try {
             const data = e.target?.result;
             if (!data) {
               throw new Error('Failed to read file content');
             }
 
-            const workbook = XLSX.read(data, { type: 'array' });
-
+            const workbook = new ExcelJS.Workbook();
+            
+            // Load from buffer
+            await workbook.xlsx.load(data as ArrayBuffer);
+            
             // Get the first worksheet
-            const sheetName = workbook.SheetNames[0];
-            if (!sheetName) {
+            const worksheet = workbook.worksheets[0];
+            if (!worksheet) {
               throw new Error('No worksheet found in the Excel file');
             }
 
-            const worksheet = workbook.Sheets[sheetName];
+            // Extract headers from first row
+            const headers: string[] = [];
+            worksheet.getRow(1).eachCell((cell) => {
+              headers.push(cell.value?.toString() || '');
+            });
 
-            // Convert to JSON with header row as keys
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-              header: 1, // Use first row as header
-              defval: null, // Default value for empty cells
-              blankrows: false, // Skip blank rows
-            }) as unknown[][];
-
-            if (jsonData.length === 0) {
-              throw new Error('No data found in the Excel file');
+            if (headers.length === 0) {
+              throw new Error('No headers found in the Excel file');
             }
 
-            // Extract headers and data
-            const headers = jsonData[0] as string[];
-            const dataRows = jsonData.slice(1);
-
-            // Convert to object array
-            const result: T[] = dataRows
-              .filter(row => row.some(cell => cell !== null && cell !== '')) // Filter empty rows
-              .map(row => {
-                const obj: Record<string, unknown> = {};
-                headers.forEach((header, index) => {
-                  const processedValue = processCellValue(row[index]);
+            // Extract data rows
+            const result: T[] = [];
+            
+            worksheet.eachRow((row, rowNumber) => {
+              // Skip header row
+              if (rowNumber === 1) return;
+              
+              // Check if row has any non-empty cells
+              let hasData = false;
+              const obj: Record<string, unknown> = {};
+              
+              row.eachCell((cell, colNumber) => {
+                const header = headers[colNumber - 1];
+                if (header) {
+                  const value = cell.value;
+                  const processedValue = processCellValue(value);
                   obj[header] = processedValue;
-                });
-                return obj as T;
+                  
+                  if (processedValue !== null) {
+                    hasData = true;
+                  }
+                }
               });
+              
+              // Only add rows with data
+              if (hasData) {
+                result.push(obj as T);
+              }
+            });
+
+            if (result.length === 0) {
+              throw new Error('No data found in the Excel file');
+            }
 
             resolve(result);
           } catch (err) {
@@ -200,50 +227,62 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
       setError(null);
 
       try {
-        // Prepare worksheet data
-        const wsData = [headers, ...data];
-
-        // Create worksheet
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-        // Set column widths
-        const colWidths = headers.map((header, index) => {
+        // Create a new workbook
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Data Grid Application';
+        workbook.created = new Date();
+        workbook.modified = new Date();
+        
+        // Add a worksheet
+        const worksheet = workbook.addWorksheet('Data');
+        
+        // Add header row
+        worksheet.addRow(headers);
+        
+        // Add data rows
+        data.forEach(row => {
+          worksheet.addRow(row);
+        });
+        
+        // Style the header row
+        const headerRow = worksheet.getRow(1);
+        headerRow.eachCell((cell) => {
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF366092' }
+          };
+          cell.alignment = { horizontal: 'center' };
+        });
+        
+        // Set column widths based on content
+        headers.forEach((header, i) => {
           let maxLength = header.length;
+          
+          // Check data length in each column
           data.forEach(row => {
-            const cellValue = row[index]?.toString() || '';
+            const cellValue = row[i]?.toString() || '';
             maxLength = Math.max(maxLength, cellValue.length);
           });
-          return { wch: Math.min(Math.max(maxLength + 2, 10), 50) };
+          
+          const col = worksheet.getColumn(i + 1);
+          col.width = Math.min(Math.max(maxLength + 2, 10), 50);
         });
-        ws['!cols'] = colWidths;
-
-        // Basic styling for header (limited in community edition)
-        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const headerCell = XLSX.utils.encode_cell({ r: 0, c: C });
-          if (ws[headerCell]) {
-            ws[headerCell].s = {
-              font: { bold: true },
-              fill: { fgColor: { rgb: '366092' } },
-              alignment: { horizontal: 'center' },
-            };
-          }
-        }
-
-        // Create workbook
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Data');
-
-        // Set workbook properties
-        wb.Props = {
-          Title: 'Exported Data',
-          Subject: 'Data Export',
-          Author: 'Data Grid Application',
-          CreatedDate: new Date(),
-        };
-
-        // Write and download file
-        XLSX.writeFile(wb, filename);
+        
+        // Write to buffer and create download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create download link and trigger download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to export data';
         setError(errorMessage);
