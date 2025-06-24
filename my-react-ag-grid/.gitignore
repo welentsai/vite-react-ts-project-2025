@@ -25,3 +25,6 @@ dist-ssr
 
 # msw browser mocking js
 mockServiceWorker.js
+
+# test coverage
+coverage
