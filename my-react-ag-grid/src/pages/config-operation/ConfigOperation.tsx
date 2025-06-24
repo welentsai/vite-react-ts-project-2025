@@ -38,7 +38,6 @@ const ConfigOperation: React.FC = () => {
     handleImport,
     handleExport,
     handleDownloadTemplate,
-    getRowClassName,
   } = useConfigOperation();
 
   const [form] = Form.useForm<QueryFormData>();
