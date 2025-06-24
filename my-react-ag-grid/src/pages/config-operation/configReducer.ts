@@ -1,6 +1,6 @@
 // src/pages/ConfigOperation/configReducer.ts
 
-import { ConfigOperationState, ConfigOperationAction, SourcePartConfig } from './types';
+import { ConfigOperationAction, ConfigOperationState, SourcePartConfig } from './types';
 
 export const initialState: ConfigOperationState = {
   configs: [],
@@ -53,12 +53,12 @@ export function configOperationReducer(
         config.id === action.payload.id ? action.payload.data : config
       );
       const newModifiedRows = new Set(state.modifiedRows);
-      
+
       // Only mark as modified if it's not a new row
       if (!state.newRows.has(action.payload.id)) {
         newModifiedRows.add(action.payload.id);
       }
-      
+
       return {
         ...state,
         configs: updatedConfigs,
@@ -71,7 +71,7 @@ export function configOperationReducer(
       const newConfig: SourcePartConfig = { ...action.payload, id: newId };
       const newNewRows = new Set(state.newRows);
       newNewRows.add(newId);
-      
+
       return {
         ...state,
         configs: [...state.configs, newConfig],
@@ -81,14 +81,14 @@ export function configOperationReducer(
 
     case 'MARK_FOR_DELETION': {
       const newDeletedRows = new Set(state.deletedRows);
-      
+
       // Toggle deletion state
       if (newDeletedRows.has(action.payload)) {
         newDeletedRows.delete(action.payload);
       } else {
         newDeletedRows.add(action.payload);
       }
-      
+
       return { ...state, deletedRows: newDeletedRows };
     }
 
@@ -119,7 +119,7 @@ export function configOperationReducer(
       }));
       const newIds = importedConfigs.map(config => config.id!);
       const newNewRows = new Set([...state.newRows, ...newIds]);
-      
+
       return {
         ...state,
         configs: [...state.configs, ...importedConfigs],
@@ -148,15 +148,12 @@ export const hasUnsavedChanges = (state: ConfigOperationState): boolean => {
   return state.modifiedRows.size > 0 || state.deletedRows.size > 0 || state.newRows.size > 0;
 };
 
-export const getRowClassName = (
-  config: SourcePartConfig, 
-  state: ConfigOperationState
-): string => {
+export const getRowClassName = (config: SourcePartConfig, state: ConfigOperationState): string => {
   if (!config.id) return '';
-  
+
   if (state.deletedRows.has(config.id)) return 'row-deleted';
   if (state.newRows.has(config.id)) return 'row-new';
   if (state.modifiedRows.has(config.id)) return 'row-modified';
-  
+
   return '';
 };

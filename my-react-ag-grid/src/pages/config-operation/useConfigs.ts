@@ -1,25 +1,20 @@
 // src/pages/ConfigOperation/useConfigs.ts
 
-import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { 
-  ConfigApiResponse, 
-  ConfigSaveRequest, 
-  SourcePartConfig, 
-  QueryFormData 
-} from './types';
+import { useCallback } from 'react';
+import { ConfigApiResponse, ConfigSaveRequest, QueryFormData, SourcePartConfig } from './types';
 
 // API functions
 const fetchConfigs = async (sourcePart: string): Promise<SourcePartConfig[]> => {
   const response = await fetch(
     `http://example.com/api/configs?sourcePart=${encodeURIComponent(sourcePart)}`
   );
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch configs: ${response.status} ${response.statusText}`);
   }
-  
+
   const data: ConfigApiResponse = await response.json();
   return data.data.map((config, index) => ({
     ...config,
@@ -63,11 +58,11 @@ const validateSaveData = (configs: SourcePartConfig[]): { isValid: boolean; erro
   const hasEmptyFields = configs.some(
     config => !config.sourcePart.trim() || !config.binGrade.trim() || !config.targetPart.trim()
   );
-  
+
   if (hasEmptyFields) {
-    return { 
-      isValid: false, 
-      error: 'Please fill in all required fields (Source Part, Bin Grade, Target Part)' 
+    return {
+      isValid: false,
+      error: 'Please fill in all required fields (Source Part, Bin Grade, Target Part)',
     };
   }
 
@@ -98,62 +93,75 @@ export const useConfigs = () => {
   });
 
   // Fetch configs by source part
-  const fetchConfigsBySourcePart = useCallback(async (formData: QueryFormData): Promise<SourcePartConfig[]> => {
-    if (!formData.sourcePart.trim()) {
-      throw new Error('Please enter a Source Part');
-    }
+  const fetchConfigsBySourcePart = useCallback(
+    async (formData: QueryFormData): Promise<SourcePartConfig[]> => {
+      if (!formData.sourcePart.trim()) {
+        throw new Error('Please enter a Source Part');
+      }
 
-    try {
-      const configs = await fetchConfigs(formData.sourcePart);
-      
-      // Update query cache
-      queryClient.setQueryData(['configs', formData.sourcePart], configs);
-      
-      return configs;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch configurations';
-      throw new Error(errorMessage);
-    }
-  }, [queryClient]);
+      try {
+        const configs = await fetchConfigs(formData.sourcePart);
+
+        // Update query cache
+        queryClient.setQueryData(['configs', formData.sourcePart], configs);
+
+        return configs;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to fetch configurations';
+        throw new Error(errorMessage);
+      }
+    },
+    [queryClient]
+  );
 
   // Save configurations
-  const saveConfigurations = useCallback((configs: SourcePartConfig[]) => {
-    // Validate data before saving
-    const validation = validateSaveData(configs);
-    if (!validation.isValid) {
-      message.error(validation.error!);
-      return Promise.reject(new Error(validation.error));
-    }
+  const saveConfigurations = useCallback(
+    (configs: SourcePartConfig[]) => {
+      // Validate data before saving
+      const validation = validateSaveData(configs);
+      if (!validation.isValid) {
+        message.error(validation.error!);
+        return Promise.reject(new Error(validation.error));
+      }
 
-    const sourcePart = configs[0]?.sourcePart || '';
-    const saveRequest: ConfigSaveRequest = {
-      sourcePart,
-      configs,
-    };
+      const sourcePart = configs[0]?.sourcePart || '';
+      const saveRequest: ConfigSaveRequest = {
+        sourcePart,
+        configs,
+      };
 
-    return saveMutation.mutateAsync(saveRequest);
-  }, [saveMutation]);
+      return saveMutation.mutateAsync(saveRequest);
+    },
+    [saveMutation]
+  );
 
   // Refetch configs for a specific source part
-  const refetchConfigs = useCallback(async (sourcePart?: string) => {
-    if (!sourcePart) {
-      return;
-    }
+  const refetchConfigs = useCallback(
+    async (sourcePart?: string) => {
+      if (!sourcePart) {
+        return;
+      }
 
-    try {
-      const configs = await fetchConfigs(sourcePart);
-      queryClient.setQueryData(['configs', sourcePart], configs);
-      return configs;
-    } catch (error) {
-      message.error('Failed to refresh data');
-      throw error;
-    }
-  }, [queryClient]);
+      try {
+        const configs = await fetchConfigs(sourcePart);
+        queryClient.setQueryData(['configs', sourcePart], configs);
+        return configs;
+      } catch (error) {
+        message.error('Failed to refresh data');
+        throw error;
+      }
+    },
+    [queryClient]
+  );
 
   // Get cached configs
-  const getCachedConfigs = useCallback((sourcePart: string): SourcePartConfig[] | undefined => {
-    return queryClient.getQueryData(['configs', sourcePart]);
-  }, [queryClient]);
+  const getCachedConfigs = useCallback(
+    (sourcePart: string): SourcePartConfig[] | undefined => {
+      return queryClient.getQueryData(['configs', sourcePart]);
+    },
+    [queryClient]
+  );
 
   // Clear configs cache
   const clearConfigsCache = useCallback(() => {
@@ -164,18 +172,18 @@ export const useConfigs = () => {
     // Query state
     isLoading: configQuery.isLoading,
     error: configQuery.error,
-    
+
     // Mutation state
     isSaving: saveMutation.isPending,
     saveError: saveMutation.error,
-    
+
     // Actions
     fetchConfigsBySourcePart,
     saveConfigurations,
     refetchConfigs,
     getCachedConfigs,
     clearConfigsCache,
-    
+
     // Raw query and mutation objects for advanced usage
     configQuery,
     saveMutation,

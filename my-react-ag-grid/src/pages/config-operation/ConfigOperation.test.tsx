@@ -1,16 +1,20 @@
-import React from 'react';
+import { test } from '@/mocks/test-extend';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, expect, beforeEach, describe } from 'vitest';
-import { test } from '@/mocks/test-extend';
 import { message } from 'antd';
 import { http, HttpResponse } from 'msw';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import { beforeEach, describe, expect, vi } from 'vitest';
 import ConfigOperation from './ConfigOperation';
 
 // Mock AG Grid to avoid JSDOM rendering issues
 vi.mock('ag-grid-react', () => ({
-  AgGridReact: ({ rowData, onGridReady, overlayNoRowsTemplate }: {
+  AgGridReact: ({
+    rowData,
+    onGridReady,
+    overlayNoRowsTemplate,
+  }: {
     rowData?: Array<Record<string, unknown>>;
     onGridReady?: (params: { api: { getSelectedRows: () => unknown[] } }) => void;
     overlayNoRowsTemplate?: string;
@@ -28,7 +32,10 @@ vi.mock('ag-grid-react', () => ({
 
     if (!rowData || !Array.isArray(rowData) || rowData.length === 0) {
       return (
-        <div data-testid="ag-grid-empty" dangerouslySetInnerHTML={{ __html: (overlayNoRowsTemplate as string) || 'No data' }} />
+        <div
+          data-testid="ag-grid-empty"
+          dangerouslySetInnerHTML={{ __html: (overlayNoRowsTemplate as string) || 'No data' }}
+        />
       );
     }
 
@@ -110,11 +117,7 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     },
   });
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 };
 
 // Helper function to render with providers
@@ -157,7 +160,9 @@ describe('ConfigOperation Component', () => {
         const emptyGrid = screen.getByTestId('ag-grid-empty');
         expect(emptyGrid).toBeInTheDocument();
         expect(emptyGrid.innerHTML).toContain('No configurations found');
-        expect(emptyGrid.innerHTML).toContain('Search for configurations or import data from Excel');
+        expect(emptyGrid.innerHTML).toContain(
+          'Search for configurations or import data from Excel'
+        );
       });
     });
   });
@@ -186,10 +191,10 @@ describe('ConfigOperation Component', () => {
       await waitFor(() => {
         // Check input value
         expect(screen.getByDisplayValue('aaa')).toBeInTheDocument();
-        
+
         // Check that grid has data
         expect(screen.getByTestId('ag-grid-with-data')).toBeInTheDocument();
-        
+
         // Check for data content in grid
         expect(screen.getByText('aaab')).toBeInTheDocument();
         expect(screen.getByText('aaad')).toBeInTheDocument();
@@ -223,10 +228,10 @@ describe('ConfigOperation Component', () => {
       const searchButton = screen.getByRole('button', { name: /search/i });
 
       await user.type(sourcePartInput, 'aaa');
-      
+
       // The search button should show loading state
       await user.click(searchButton);
-      
+
       await waitFor(() => {
         expect(screen.getByDisplayValue('aaa')).toBeInTheDocument();
       });
@@ -313,7 +318,7 @@ describe('ConfigOperation Component', () => {
       });
 
       const initialRows = screen.getAllByRole('row').length;
-      
+
       // Click add button
       await user.click(screen.getByRole('button', { name: /add/i }));
 
@@ -434,9 +439,16 @@ describe('ConfigOperation Component', () => {
     test('handles file import', async () => {
       renderWithProviders(<ConfigOperation />);
 
-      const file = createMockFile('test.xlsx', 'mock content', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      const uploadInput = screen.getByRole('button', { name: /import/i }).closest('span')?.querySelector('input[type="file"]') as HTMLInputElement;
-      
+      const file = createMockFile(
+        'test.xlsx',
+        'mock content',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      const uploadInput = screen
+        .getByRole('button', { name: /import/i })
+        .closest('span')
+        ?.querySelector('input[type="file"]') as HTMLInputElement;
+
       if (uploadInput) {
         await user.upload(uploadInput, file);
         expect(mockImportFromExcel).toHaveBeenCalledWith(file);
@@ -477,12 +489,19 @@ describe('ConfigOperation Component', () => {
 
       renderWithProviders(<ConfigOperation />);
 
-      const file = createMockFile('test.xlsx', 'mock content', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      const uploadInput = screen.getByRole('button', { name: /import/i }).closest('span')?.querySelector('input[type="file"]') as HTMLInputElement;
-      
+      const file = createMockFile(
+        'test.xlsx',
+        'mock content',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      const uploadInput = screen
+        .getByRole('button', { name: /import/i })
+        .closest('span')
+        ?.querySelector('input[type="file"]') as HTMLInputElement;
+
       if (uploadInput) {
         await user.upload(uploadInput, file);
-        
+
         await waitFor(() => {
           expect(message.error).toHaveBeenCalledWith('Import validation failed');
         });
@@ -559,10 +578,10 @@ describe('ConfigOperation Component', () => {
       await waitFor(() => {
         // Check that grid is displayed with data
         expect(screen.getByTestId('ag-grid-with-data')).toBeInTheDocument();
-        
+
         // Check for column headers in our mocked grid
         expect(screen.getAllByRole('columnheader')).toHaveLength(5);
-        
+
         // Use getAllByText to handle multiple matches and verify grid headers specifically
         const sourcePartElements = screen.getAllByText('Source Part');
         expect(sourcePartElements.length).toBeGreaterThanOrEqual(1);
@@ -625,7 +644,7 @@ describe('ConfigOperation Component', () => {
       const searchButton = screen.getByRole('button', { name: /search/i });
 
       await user.type(sourcePartInput, 'aaa');
-      
+
       // Loading state should be handled by the button's loading prop
       await user.click(searchButton);
 
@@ -723,9 +742,16 @@ describe('ConfigOperation Component', () => {
       });
 
       // 3. Import file
-      const file = createMockFile('test.xlsx', 'mock content', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      const uploadInput = screen.getByRole('button', { name: /import/i }).closest('span')?.querySelector('input[type="file"]') as HTMLInputElement;
-      
+      const file = createMockFile(
+        'test.xlsx',
+        'mock content',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      const uploadInput = screen
+        .getByRole('button', { name: /import/i })
+        .closest('span')
+        ?.querySelector('input[type="file"]') as HTMLInputElement;
+
       if (uploadInput) {
         await user.upload(uploadInput, file);
       }

@@ -1,55 +1,50 @@
 // src/pages/ConfigOperation/hook.ts
 
-import { useCallback, useReducer } from 'react';
 import { message } from 'antd';
-import { 
-  configOperationReducer, 
-  initialState, 
-  getValidConfigs, 
-  getExportableConfigs, 
+import { useCallback, useReducer } from 'react';
+import {
+  configOperationReducer,
+  getExportableConfigs,
+  getRowClassName,
+  getValidConfigs,
   hasUnsavedChanges,
-  getRowClassName 
+  initialState,
 } from './configReducer';
+import { QueryFormData, SourcePartConfig } from './types';
 import { useConfigs } from './useConfigs';
 import { useExcel } from './useExcel';
-import { SourcePartConfig, QueryFormData } from './types';
 
 export const useConfigOperation = () => {
   const [state, dispatch] = useReducer(configOperationReducer, initialState);
-  
+
   // API operations hook
-  const {
-    fetchConfigsBySourcePart,
-    saveConfigurations,
-    isSaving,
-    refetchConfigs,
-  } = useConfigs();
-  
+  const { fetchConfigsBySourcePart, saveConfigurations, isSaving, refetchConfigs } = useConfigs();
+
   // Excel operations hook
-  const {
-    downloadTemplate,
-    exportToExcel,
-    importFromExcel,
-    validateImportConsistency,
-  } = useExcel();
+  const { downloadTemplate, exportToExcel, importFromExcel, validateImportConsistency } =
+    useExcel();
 
   // Search/Query operations
-  const handleSearch = useCallback(async (formData: QueryFormData) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
+  const handleSearch = useCallback(
+    async (formData: QueryFormData) => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
 
-    try {
-      const configs = await fetchConfigsBySourcePart(formData);
-      dispatch({ type: 'SET_CONFIGS', payload: configs });
-      dispatch({ type: 'SET_EDITING', payload: false });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch configurations';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      message.error(errorMessage);
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
-  }, [fetchConfigsBySourcePart]);
+      try {
+        const configs = await fetchConfigsBySourcePart(formData);
+        dispatch({ type: 'SET_CONFIGS', payload: configs });
+        dispatch({ type: 'SET_EDITING', payload: false });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to fetch configurations';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
+        message.error(errorMessage);
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    },
+    [fetchConfigsBySourcePart]
+  );
 
   // Edit mode management
   const handleEditToggle = useCallback(() => {
@@ -98,7 +93,7 @@ export const useConfigOperation = () => {
       await saveConfigurations(validConfigs);
       dispatch({ type: 'RESET_CHANGES' });
       dispatch({ type: 'SET_EDITING', payload: false });
-      
+
       // Refetch data to ensure consistency
       const currentSourcePart = validConfigs[0]?.sourcePart;
       if (currentSourcePart) {
@@ -117,41 +112,44 @@ export const useConfigOperation = () => {
   }, []);
 
   // Excel import operation
-  const handleImport = useCallback(async (file: File) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      // Import data from Excel
-      const importedConfigs = await importFromExcel(file);
-      
-      // Validate consistency with existing data
-      const validation = validateImportConsistency(state.configs, importedConfigs);
-      if (!validation.isValid) {
-        message.error(validation.error!);
+  const handleImport = useCallback(
+    async (file: File) => {
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+
+        // Import data from Excel
+        const importedConfigs = await importFromExcel(file);
+
+        // Validate consistency with existing data
+        const validation = validateImportConsistency(state.configs, importedConfigs);
+        if (!validation.isValid) {
+          message.error(validation.error!);
+          return false;
+        }
+
+        // Import the data
+        dispatch({ type: 'IMPORT_DATA', payload: importedConfigs });
+
+        // Auto-enter edit mode if not already in edit mode
+        if (!state.isEditing) {
+          dispatch({ type: 'SET_EDITING', payload: true });
+        }
+
+        return false; // Prevent default upload behavior
+      } catch (error) {
+        // Error handling is done in useExcel hook
         return false;
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
-      
-      // Import the data
-      dispatch({ type: 'IMPORT_DATA', payload: importedConfigs });
-      
-      // Auto-enter edit mode if not already in edit mode
-      if (!state.isEditing) {
-        dispatch({ type: 'SET_EDITING', payload: true });
-      }
-      
-      return false; // Prevent default upload behavior
-    } catch (error) {
-      // Error handling is done in useExcel hook
-      return false;
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
-  }, [state.configs, state.isEditing, importFromExcel, validateImportConsistency]);
+    },
+    [state.configs, state.isEditing, importFromExcel, validateImportConsistency]
+  );
 
   // Excel export operation
   const handleExport = useCallback(() => {
     const exportConfigs = getExportableConfigs(state);
-    
+
     if (exportConfigs.length === 0) {
       message.warning('No data to export');
       return;
@@ -177,9 +175,12 @@ export const useConfigOperation = () => {
   }, [downloadTemplate]);
 
   // Row styling helper
-  const getRowClassNameForConfig = useCallback((config: SourcePartConfig): string => {
-    return getRowClassName(config, state);
-  }, [state]);
+  const getRowClassNameForConfig = useCallback(
+    (config: SourcePartConfig): string => {
+      return getRowClassName(config, state);
+    },
+    [state]
+  );
 
   // Computed properties
   const computedState = {
@@ -194,28 +195,28 @@ export const useConfigOperation = () => {
     state: computedState,
     isLoading: state.isLoading,
     isSaving,
-    
+
     // Search operations
     handleSearch,
-    
+
     // Edit mode operations
     handleEditToggle,
-    
+
     // Row operations
     handleRowUpdate,
     handleAddRow,
     handleDeleteRow,
     handleSelectionChange,
-    
+
     // Save/Discard operations
     handleSave,
     handleDiscard,
-    
+
     // Excel operations
     handleImport,
     handleExport,
     handleDownloadTemplate,
-    
+
     // Utility functions
     getRowClassName: getRowClassNameForConfig,
   };

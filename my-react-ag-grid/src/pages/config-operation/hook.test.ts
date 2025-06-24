@@ -1,12 +1,12 @@
 import { test } from '@/mocks/test-extend';
-import { expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { http, HttpResponse } from 'msw';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { message } from 'antd';
-import { useConfigOperation } from './hook';
-import { SourcePartConfig, QueryFormData } from './types';
+import { http, HttpResponse } from 'msw';
 import React from 'react';
+import { afterEach, beforeEach, expect, vi } from 'vitest';
+import { useConfigOperation } from './hook';
+import { QueryFormData, SourcePartConfig } from './types';
 
 // Mock antd message
 vi.mock('antd', () => ({
@@ -53,7 +53,6 @@ const createWrapper = () => {
     return React.createElement(QueryClientProvider, { client: queryClient }, children);
   };
 };
-
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -346,7 +345,9 @@ test('should handle Excel import successfully', async () => {
   });
 
   const initialLength = result.current.state.configs.length;
-  const mockFile = new File(['test'], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const mockFile = new File(['test'], 'test.xlsx', {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
 
   await act(async () => {
     const result_import = await result.current.handleImport(mockFile);
@@ -578,10 +579,12 @@ test('should handle import with validation errors', async () => {
   });
 
   const initialLength = result.current.state.configs.length;
-  
+
   // Since the import validation happens in the hook itself, we expect it to still import
   // but the hook should handle the validation error properly
-  const mockFile = new File(['test'], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const mockFile = new File(['test'], 'test.xlsx', {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
 
   await act(async () => {
     const result_import = await result.current.handleImport(mockFile);

@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
 import ExcelJS from 'exceljs';
+import { useCallback, useState } from 'react';
 
 // Define specific types instead of using 'any'
 type CellValue = string | number | boolean | null | undefined;
@@ -48,13 +48,13 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
         workbook.creator = 'Data Grid Application';
         workbook.created = new Date();
         workbook.modified = new Date();
-        
+
         // Add a worksheet
         const worksheet = workbook.addWorksheet('Template');
-        
+
         // Add header row
         worksheet.addRow(headers);
-        
+
         // Add sample data rows
         if (sampleData.length > 0) {
           sampleData.forEach(row => {
@@ -66,36 +66,38 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
             worksheet.addRow(new Array(headers.length).fill(''));
           }
         }
-        
+
         // Style the header row
         const headerRow = worksheet.getRow(1);
-        headerRow.eachCell((cell) => {
+        headerRow.eachCell(cell => {
           cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
-            fgColor: { argb: 'FF4472C4' }
+            fgColor: { argb: 'FF4472C4' },
           };
           cell.alignment = { horizontal: 'center' };
         });
-        
+
         // Set column widths
         headers.forEach((header, i) => {
           const col = worksheet.getColumn(i + 1);
           col.width = Math.max(header.length + 2, 15);
         });
-        
+
         // Write to buffer and create download
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const blob = new Blob([buffer], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
         const url = window.URL.createObjectURL(blob);
-        
+
         // Create download link and trigger download
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         a.click();
-        
+
         // Clean up
         window.URL.revokeObjectURL(url);
       } catch (err) {
@@ -137,7 +139,7 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
 
         const reader = new FileReader();
 
-        reader.onload = async (e) => {
+        reader.onload = async e => {
           try {
             const data = e.target?.result;
             if (!data) {
@@ -145,10 +147,10 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
             }
 
             const workbook = new ExcelJS.Workbook();
-            
+
             // Load from buffer
             await workbook.xlsx.load(data as ArrayBuffer);
-            
+
             // Get the first worksheet
             const worksheet = workbook.worksheets[0];
             if (!worksheet) {
@@ -157,7 +159,7 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
 
             // Extract headers from first row
             const headers: string[] = [];
-            worksheet.getRow(1).eachCell((cell) => {
+            worksheet.getRow(1).eachCell(cell => {
               headers.push(cell.value?.toString() || '');
             });
 
@@ -167,28 +169,28 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
 
             // Extract data rows
             const result: T[] = [];
-            
+
             worksheet.eachRow((row, rowNumber) => {
               // Skip header row
               if (rowNumber === 1) return;
-              
+
               // Check if row has any non-empty cells
               let hasData = false;
               const obj: Record<string, unknown> = {};
-              
+
               row.eachCell((cell, colNumber) => {
                 const header = headers[colNumber - 1];
                 if (header) {
                   const value = cell.value;
                   const processedValue = processCellValue(value);
                   obj[header] = processedValue;
-                  
+
                   if (processedValue !== null) {
                     hasData = true;
                   }
                 }
               });
-              
+
               // Only add rows with data
               if (hasData) {
                 result.push(obj as T);
@@ -232,55 +234,57 @@ export const useExcel = <T = ExcelData,>(): UseExcelReturn<T> => {
         workbook.creator = 'Data Grid Application';
         workbook.created = new Date();
         workbook.modified = new Date();
-        
+
         // Add a worksheet
         const worksheet = workbook.addWorksheet('Data');
-        
+
         // Add header row
         worksheet.addRow(headers);
-        
+
         // Add data rows
         data.forEach(row => {
           worksheet.addRow(row);
         });
-        
+
         // Style the header row
         const headerRow = worksheet.getRow(1);
-        headerRow.eachCell((cell) => {
+        headerRow.eachCell(cell => {
           cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
-            fgColor: { argb: 'FF366092' }
+            fgColor: { argb: 'FF366092' },
           };
           cell.alignment = { horizontal: 'center' };
         });
-        
+
         // Set column widths based on content
         headers.forEach((header, i) => {
           let maxLength = header.length;
-          
+
           // Check data length in each column
           data.forEach(row => {
             const cellValue = row[i]?.toString() || '';
             maxLength = Math.max(maxLength, cellValue.length);
           });
-          
+
           const col = worksheet.getColumn(i + 1);
           col.width = Math.min(Math.max(maxLength + 2, 10), 50);
         });
-        
+
         // Write to buffer and create download
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const blob = new Blob([buffer], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
         const url = window.URL.createObjectURL(blob);
-        
+
         // Create download link and trigger download
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         a.click();
-        
+
         // Clean up
         window.URL.revokeObjectURL(url);
       } catch (err) {

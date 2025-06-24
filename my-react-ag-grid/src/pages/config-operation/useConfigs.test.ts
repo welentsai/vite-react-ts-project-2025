@@ -1,12 +1,12 @@
 import { test } from '@/mocks/test-extend';
-import { expect, vi, beforeEach, afterEach, describe } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { message } from 'antd';
-import { useConfigs } from './useConfigs';
-import { SourcePartConfig, QueryFormData } from './types';
-import { ReactNode, createElement } from 'react';
 import { http } from 'msw';
+import { ReactNode, createElement } from 'react';
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest';
+import { QueryFormData, SourcePartConfig } from './types';
+import { useConfigs } from './useConfigs';
 
 // Mock antd message
 vi.mock('antd', () => ({
@@ -24,7 +24,7 @@ const mockConfigs: SourcePartConfig[] = [
     binGrade: '1',
     targetPart: 'aaab',
     claimUser: 'WL',
-    claimTime: '2025'
+    claimTime: '2025',
   },
   {
     id: '2',
@@ -32,8 +32,8 @@ const mockConfigs: SourcePartConfig[] = [
     binGrade: 'x',
     targetPart: 'aaad',
     claimUser: 'WL',
-    claimTime: '2025'
-  }
+    claimTime: '2025',
+  },
 ];
 
 const mockConfigsDifferentSourcePart: SourcePartConfig[] = [
@@ -43,7 +43,7 @@ const mockConfigsDifferentSourcePart: SourcePartConfig[] = [
     binGrade: '1',
     targetPart: 'aaab',
     claimUser: 'WL',
-    claimTime: '2025'
+    claimTime: '2025',
   },
   {
     id: '2',
@@ -51,8 +51,8 @@ const mockConfigsDifferentSourcePart: SourcePartConfig[] = [
     binGrade: 'x',
     targetPart: 'aaad',
     claimUser: 'WL',
-    claimTime: '2025'
-  }
+    claimTime: '2025',
+  },
 ];
 
 const mockConfigsWithEmptyFields: SourcePartConfig[] = [
@@ -62,8 +62,8 @@ const mockConfigsWithEmptyFields: SourcePartConfig[] = [
     binGrade: '1',
     targetPart: 'aaab',
     claimUser: 'WL',
-    claimTime: '2025'
-  }
+    claimTime: '2025',
+  },
 ];
 
 // Helper function to create wrapper with QueryClient
@@ -135,8 +135,9 @@ describe('useConfigs Hook', () => {
     const formData: QueryFormData = { sourcePart: '' };
 
     await act(async () => {
-      await expect(result.current.fetchConfigsBySourcePart(formData))
-        .rejects.toThrow('Please enter a Source Part');
+      await expect(result.current.fetchConfigsBySourcePart(formData)).rejects.toThrow(
+        'Please enter a Source Part'
+      );
     });
   });
 
@@ -147,8 +148,9 @@ describe('useConfigs Hook', () => {
     const formData: QueryFormData = { sourcePart: '   ' };
 
     await act(async () => {
-      await expect(result.current.fetchConfigsBySourcePart(formData))
-        .rejects.toThrow('Please enter a Source Part');
+      await expect(result.current.fetchConfigsBySourcePart(formData)).rejects.toThrow(
+        'Please enter a Source Part'
+      );
     });
   });
 
@@ -166,8 +168,9 @@ describe('useConfigs Hook', () => {
     const formData: QueryFormData = { sourcePart: 'error' };
 
     await act(async () => {
-      await expect(result.current.fetchConfigsBySourcePart(formData))
-        .rejects.toThrow('Failed to fetch configs: 500 Internal Server Error');
+      await expect(result.current.fetchConfigsBySourcePart(formData)).rejects.toThrow(
+        'Failed to fetch configs: 500 Internal Server Error'
+      );
     });
   });
 
@@ -205,8 +208,7 @@ describe('useConfigs Hook', () => {
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.saveConfigurations([]))
-        .rejects.toThrow('No data to save');
+      await expect(result.current.saveConfigurations([])).rejects.toThrow('No data to save');
     });
 
     expect(mockMessageError).toHaveBeenCalledWith('No data to save');
@@ -217,8 +219,9 @@ describe('useConfigs Hook', () => {
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.saveConfigurations(mockConfigsDifferentSourcePart))
-        .rejects.toThrow('All source parts must be the same');
+      await expect(
+        result.current.saveConfigurations(mockConfigsDifferentSourcePart)
+      ).rejects.toThrow('All source parts must be the same');
     });
 
     expect(mockMessageError).toHaveBeenCalledWith('All source parts must be the same');
@@ -229,21 +232,21 @@ describe('useConfigs Hook', () => {
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.saveConfigurations(mockConfigsWithEmptyFields))
-        .rejects.toThrow('Please fill in all required fields (Source Part, Bin Grade, Target Part)');
+      await expect(result.current.saveConfigurations(mockConfigsWithEmptyFields)).rejects.toThrow(
+        'Please fill in all required fields (Source Part, Bin Grade, Target Part)'
+      );
     });
 
-    expect(mockMessageError).toHaveBeenCalledWith('Please fill in all required fields (Source Part, Bin Grade, Target Part)');
+    expect(mockMessageError).toHaveBeenCalledWith(
+      'Please fill in all required fields (Source Part, Bin Grade, Target Part)'
+    );
   });
 
   test('saveConfigurations should handle API save errors', async ({ worker }) => {
     // Mock API error response
     worker.use(
       http.post('http://example.com/api/configs', () => {
-        return Response.json(
-          { message: 'Save operation failed' },
-          { status: 400 }
-        );
+        return Response.json({ message: 'Save operation failed' }, { status: 400 });
       })
     );
 
@@ -251,8 +254,9 @@ describe('useConfigs Hook', () => {
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.saveConfigurations(mockConfigs))
-        .rejects.toThrow('Save operation failed');
+      await expect(result.current.saveConfigurations(mockConfigs)).rejects.toThrow(
+        'Save operation failed'
+      );
     });
 
     await waitFor(() => {
@@ -272,8 +276,9 @@ describe('useConfigs Hook', () => {
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.saveConfigurations(mockConfigs))
-        .rejects.toThrow('Unexpected response status');
+      await expect(result.current.saveConfigurations(mockConfigs)).rejects.toThrow(
+        'Unexpected response status'
+      );
     });
   });
 
@@ -291,7 +296,7 @@ describe('useConfigs Hook', () => {
 
     // After completion, isSaving should be false again
     expect(result.current.isSaving).toBe(false);
-    
+
     // Verify success message was called
     await waitFor(() => {
       expect(mockMessageSuccess).toHaveBeenCalledWith('Configurations saved successfully');
@@ -345,8 +350,7 @@ describe('useConfigs Hook', () => {
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.refetchConfigs('error'))
-        .rejects.toThrow();
+      await expect(result.current.refetchConfigs('error')).rejects.toThrow();
     });
 
     expect(mockMessageError).toHaveBeenCalledWith('Failed to refresh data');
@@ -413,8 +417,7 @@ describe('useConfigs Hook', () => {
     const formData: QueryFormData = { sourcePart: 'aaa' };
 
     await act(async () => {
-      await expect(result.current.fetchConfigsBySourcePart(formData))
-        .rejects.toThrow();
+      await expect(result.current.fetchConfigsBySourcePart(formData)).rejects.toThrow();
     });
   });
 
@@ -424,7 +427,7 @@ describe('useConfigs Hook', () => {
       http.get('http://example.com/api/configs', () => {
         return new Response('invalid json', {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         });
       })
     );
@@ -435,8 +438,7 @@ describe('useConfigs Hook', () => {
     const formData: QueryFormData = { sourcePart: 'aaa' };
 
     await act(async () => {
-      await expect(result.current.fetchConfigsBySourcePart(formData))
-        .rejects.toThrow();
+      await expect(result.current.fetchConfigsBySourcePart(formData)).rejects.toThrow();
     });
   });
 
@@ -452,9 +454,9 @@ describe('useConfigs Hook', () => {
               binGrade: '1',
               targetPart: 'aaab',
               claimUser: 'WL',
-              claimTime: '2025'
-            }
-          ]
+              claimTime: '2025',
+            },
+          ],
         });
       })
     );
@@ -495,8 +497,9 @@ describe('useConfigs Hook', () => {
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.saveConfigurations(mockConfigs))
-        .rejects.toThrow('Save failed: 500 Internal Server Error');
+      await expect(result.current.saveConfigurations(mockConfigs)).rejects.toThrow(
+        'Save failed: 500 Internal Server Error'
+      );
     });
   });
 
@@ -508,16 +511,17 @@ describe('useConfigs Hook', () => {
         binGrade: '1',
         targetPart: 'aaab',
         claimUser: 'WL',
-        claimTime: '2025'
-      }
+        claimTime: '2025',
+      },
     ];
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useConfigs(), { wrapper });
 
     await act(async () => {
-      await expect(result.current.saveConfigurations(configsWithWhitespace))
-        .rejects.toThrow('Please fill in all required fields (Source Part, Bin Grade, Target Part)');
+      await expect(result.current.saveConfigurations(configsWithWhitespace)).rejects.toThrow(
+        'Please fill in all required fields (Source Part, Bin Grade, Target Part)'
+      );
     });
   });
 });

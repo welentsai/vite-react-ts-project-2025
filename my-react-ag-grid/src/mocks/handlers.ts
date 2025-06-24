@@ -79,7 +79,7 @@ let mockConfigs: SourcePartConfig[] = [
     binGrade: '1',
     targetPart: 'aaab',
     claimUser: 'WL',
-    claimTime: '2025'
+    claimTime: '2025',
   },
   {
     id: '2',
@@ -87,7 +87,7 @@ let mockConfigs: SourcePartConfig[] = [
     binGrade: '2',
     targetPart: 'bbbc',
     claimUser: 'WL',
-    claimTime: '2025'
+    claimTime: '2025',
   },
   {
     id: '3',
@@ -95,9 +95,9 @@ let mockConfigs: SourcePartConfig[] = [
     binGrade: 'x',
     targetPart: 'aaad',
     claimUser: 'WL',
-    claimTime: '2025'
+    claimTime: '2025',
   },
-]
+];
 
 export const handlers = [
   // GET /api/v1/customers
@@ -184,21 +184,21 @@ export const handlers = [
   }),
 
   // GET /api/v1/configs
-  http.get('http://example.com/api/configs', ({request}) => {
-    const url = new URL(request.url)
-    const sourcePart = url.searchParams.get('sourcePart')
-    let filteredConfigs = mockConfigs
+  http.get('http://example.com/api/configs', ({ request }) => {
+    const url = new URL(request.url);
+    const sourcePart = url.searchParams.get('sourcePart');
+    let filteredConfigs = mockConfigs;
     // Filter by sourcePart if provided
     if (sourcePart) {
-      filteredConfigs = mockConfigs.filter(config => 
+      filteredConfigs = mockConfigs.filter(config =>
         config.sourcePart.toLowerCase().includes(sourcePart.toLowerCase())
-      )
+      );
     }
     return HttpResponse.json({
       success: true,
       data: filteredConfigs,
       total: mockConfigs.length,
-      message: 'Success to fetch config !'
+      message: 'Success to fetch config !',
     });
   }),
 
@@ -210,10 +210,13 @@ export const handlers = [
 
     mockConfigs = saveRequest.configs;
 
-    return HttpResponse.json({
-      success: true,
-      data: mockConfigs,
-      message: 'Customer created successfully',
-    }, {status: 201});
+    return HttpResponse.json(
+      {
+        success: true,
+        data: mockConfigs,
+        message: 'Customer created successfully',
+      },
+      { status: 201 }
+    );
   }),
 ];
