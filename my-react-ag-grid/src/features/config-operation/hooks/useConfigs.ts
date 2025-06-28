@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
 import { useCallback } from 'react';
-import { ConfigApiResponse, ConfigSaveRequest, QueryFormData, SourcePartConfig } from './types';
+import { ConfigApiResponse, ConfigSaveRequest, QueryFormData, SourcePartConfig } from '../types/types';
 
 // API functions
 const fetchConfigs = async (sourcePart: string): Promise<SourcePartConfig[]> => {

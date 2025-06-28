@@ -24,8 +24,8 @@ import { AgGridReact } from 'ag-grid-react';
 import { Button, Card, Form, Input, Modal, Space, Typography, Upload } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 import './ag-grid-custom.css';
-import { useConfigOperation } from './hook';
-import { QueryFormData, SourcePartConfig } from './types';
+import { useConfigOperation } from '../hooks/hook';
+import { QueryFormData, SourcePartConfig } from '../types/types';
 
 const { Title } = Typography;
 

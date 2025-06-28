@@ -4,7 +4,7 @@ import { message } from 'antd';
 import axios from 'axios';
 import ExcelJS from 'exceljs';
 import { useCallback } from 'react';
-import { ImportedRowData, SourcePartConfig } from './types';
+import { ImportedRowData, SourcePartConfig } from '../types/types';
 
 // Excel utility functions
 const validateImportedRow = (row: ImportedRowData): SourcePartConfig | null => {

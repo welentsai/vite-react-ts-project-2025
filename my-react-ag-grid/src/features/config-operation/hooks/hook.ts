@@ -9,8 +9,8 @@ import {
   getValidConfigs,
   hasUnsavedChanges,
   initialState,
-} from './configReducer';
-import { QueryFormData, SourcePartConfig } from './types';
+} from '../store/configReducer';
+import { QueryFormData, SourcePartConfig } from '../types/types';
 import { useConfigs } from './useConfigs';
 import { useExcel } from './useExcel';
 
@@ -18,7 +18,7 @@ export const useConfigOperation = () => {
   const [state, dispatch] = useReducer(configOperationReducer, initialState);
 
   // API operations hook
-  const { fetchConfigsBySourcePart, saveConfigurations, isSaving, refetchConfigs } = useConfigs();
+  const { fetchConfigsBySourcePart, saveConfigurations, isSaving } = useConfigs();
 
   // Excel operations hook
   const { downloadTemplate, exportToExcel, importFromExcel, validateImportConsistency } =
@@ -136,7 +136,7 @@ export const useConfigOperation = () => {
         }
 
         return false; // Prevent default upload behavior
-      } catch (error) {
+      } catch {
         // Error handling is done in useExcel hook
         return false;
       } finally {

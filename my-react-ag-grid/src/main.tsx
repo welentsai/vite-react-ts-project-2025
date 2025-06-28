@@ -14,9 +14,9 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 // import { DataGridWithSheetJS } from '@/components/DataGridWithSheetJs';
 import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
-import ConfigOperation from './pages/config-operation';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ConfigOperation from './features/config-operation/components/ConfigOperation';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
