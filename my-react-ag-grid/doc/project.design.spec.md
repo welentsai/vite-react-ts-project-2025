@@ -5,13 +5,16 @@
 This is a comprehensive guide for developing a modern, enterprise-grade TypeScript React application. The project emphasizes **maintainability**, **scalability**, **performance**, and **developer experience** through carefully chosen technologies and architectural patterns.
 
 ### Quick Reference
-- **Framework**: React 18 with TypeScript
+- **Framework**: React 18
+- **Language**: Typescript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4 + Ant Design
 - **Data Grid**: ag-Grid React
 - **State Management**: useReducer + React Query
 - **Testing**: Vitest + React Testing Library
 - **Architecture**: Feature-based, hook-driven
+- **RESTFul Api**: Using `jsonapi` as the Restful API design standard
+- **Typing System**: Schema-First Typescript Type Definitions with `Zod 4`
 
 ---
 
@@ -30,6 +33,7 @@ This is a comprehensive guide for developing a modern, enterprise-grade TypeScri
 | **HTTP Client** | Axios | Latest | Promise-based HTTP client |
 | **Server State** | @tanstack/react-query | Latest | Server state management and caching |
 | **Pattern Matching** | ts-pattern | Latest | Functional pattern matching |
+| **Type Schema and Type validation** | zod | Latest | TypeScript-first schema validation with static type inference |
 | **Excel Operations** | ExcelJS | Latest | Excel import/export functionality |
 | **API Mocking** | MSW | Latest | Mock Service Worker for testing |
 | **Testing Framework** | Vitest | Latest | Fast unit testing framework |

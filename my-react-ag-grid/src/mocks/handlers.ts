@@ -1,6 +1,7 @@
-import { SourcePartConfig } from '@/pages/config-operation';
-import { ConfigSaveRequest } from '@/pages/config-operation/types';
 import { http, HttpResponse } from 'msw';
+import { materialQueryHandlers } from './handlers/materialQueryHandlers';
+import { SourcePartConfig } from '@/features/config-operation';
+import { ConfigSaveRequest } from '@/features/config-operation/types/types';
 
 // Define the customer interface
 export interface Customer {
@@ -100,6 +101,7 @@ let mockConfigs: SourcePartConfig[] = [
 ];
 
 export const handlers = [
+  ...materialQueryHandlers,
   // GET /api/v1/customers
   http.get('http://abc.example.com/api/v1/customers', () => {
     return HttpResponse.json({

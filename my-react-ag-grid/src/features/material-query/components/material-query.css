@@ -1,0 +1,21 @@
+/* src/features/material-query/components/material-query.css */
+.material-card {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+}
+
+.material-card .ant-card-body {
+  padding: 16px;
+}
+
+.ant-tabs-nav {
+  margin-bottom: 16px;
+}
+
+.ant-form-item {
+  margin-bottom: 16px;
+}
+
+.ant-btn {
+  min-width: 80px;
+}

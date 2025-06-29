@@ -17,6 +17,7 @@ import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ConfigOperation from './features/config-operation/components/ConfigOperation';
+import { MaterialQuery } from './features/material-query';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -40,7 +41,8 @@ enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <ConfigOperation />
+        {/* <ConfigOperation /> */}
+        <MaterialQuery />
       </QueryClientProvider>
     </StrictMode>
 

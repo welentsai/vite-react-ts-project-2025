@@ -1,0 +1,23 @@
+# I am design a Material Query Feature
+- in the Material Query Page it will have query form
+- in the query form, it has only one input field called `Equipment ID`
+- in the query form, it has a submit button with blue
+- when user fill in the `Equipment ID` and click the submit button, it will check the input is not empty and then send out the GET request to https://abc.example.com/api/configs?equipmentId=? to fetch Material Response, contains `direct material` list and `indirect material` list
+- The Material had two types, `Direct Materials` and `Indirect Materials`
+- the Direct Materials contains
+  - name, string type
+  - type, string type
+  - grade, string type
+  - color, string type
+  - weight, number type
+  - volume, number type
+- the Indirect Materials contains
+  - name, string type
+  - category, string type
+  - model number, string type
+  - cost center code, string type
+  - unit cost, number type
+- the fetched `Material` will render at a following ag-grid-react table component
+- the table has two tabs, first tab for direct materials, the second tab for indirect materials
+- at beginning the table is only readable only mode
+- each column is filterable and sortable
