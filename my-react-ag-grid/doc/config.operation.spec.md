@@ -1,0 +1,29 @@
+# I am design a Config Operation Page
+- in the Config Operation Page it will have query form
+- in the query form, it has only one input field called `Source Part`
+- in the query form, it has a submit button with blue
+- when user fill in the `Source Part` and click the submit button, it will check the input is not empty and then send out the GET request to http://example.com/api/configs?sourcePart=? to fetch SourcePart config list
+- the SourcePart config contains
+  - sourcePart, string type
+  - binGrade, string type
+  - targetPart, string type
+  - claimUser, string type
+  - claimTime, string type
+- the fetched source part config list will render at a following ag-grid-react table component
+- at beginning the table is only readable only mode
+- at the right top of the table component, it has a `Edit` button to turn the table to be editable mode
+  - sourcePart field is editable
+  - binGrade is editable
+  - targetPart is editable
+- at the editable mode, the right top had `add`,  `delete`, `save` , `import` and `export`, `discard` buttons
+  - when the data row is selected and click the `delete` button, the the row styling will have light red background
+  - when the data row is modified, the row styling will have a light yellow background
+  - when the data row is new added, the row styling will have a light green background
+  - the `discard` button is used to discard the change to read only mode
+  - when the `save` button is click, it will perform data validation and send POST request
+    - validate all the source part should be the same
+    - if all data row validated, send POST request to http://example.com/api/configs for all data rows but exclude the deleted data rows 
+    - re-fetch the SourcePart config list when api response with status 201
+    - show error modal when api response is non success code
+  - the `import` button will using the xlsx library to import row data from excel
+  - the `export` button will export current data rows to excel
