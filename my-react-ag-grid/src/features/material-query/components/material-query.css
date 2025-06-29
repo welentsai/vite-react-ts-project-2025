@@ -2,20 +2,106 @@
 .material-card {
   border-radius: 8px;
   border: 1px solid #e8e8e8;
+  transition: box-shadow 0.3s ease;
+}
+
+.material-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .material-card .ant-card-body {
-  padding: 16px;
+  padding: 24px;
 }
 
 .ant-tabs-nav {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #1890ff;
+}
+
+.ant-tabs-ink-bar {
+  background-color: #1890ff;
 }
 
 .ant-form-item {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.ant-input {
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 14px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ant-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 .ant-btn {
   min-width: 80px;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.ant-btn-primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+.ant-btn-primary:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.ant-btn-primary:disabled {
+  background-color: #d9d9d9;
+  border-color: #d9d9d9;
+  cursor: not-allowed;
+}
+
+.ag-theme-alpine {
+  --ag-foreground-color: #333;
+  --ag-background-color: #fff;
+  --ag-header-foreground-color: #fff;
+  --ag-header-background-color: #1890ff;
+  --ag-odd-row-background-color: #f8f9fa;
+  --ag-row-hover-color: rgba(24, 144, 255, 0.1);
+  --ag-column-hover-color: rgba(24, 144, 255, 0.1);
+  --ag-border-color: #e8e8e8;
+}
+
+.ag-theme-alpine .ag-header {
+  font-weight: 600;
+}
+
+.ag-theme-alpine .ag-row {
+  transition: background-color 0.2s ease;
+}
+
+.ag-theme-alpine .ag-row:hover {
+  cursor: pointer;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .material-card {
+    padding: 16px;
+  }
+  
+  .material-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .ant-btn {
+    min-width: 60px;
+    padding: 4px 12px;
+  }
 }

@@ -1,6 +1,6 @@
 // src/features/material-query/components/MaterialQuery.tsx
 import React from 'react';
-import { Button, Card, Tabs, Typography } from 'antd';
+import { Button, Card, Tabs, Typography, Statistic, Row, Col, Empty, Spin } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef } from 'ag-grid-community';
 import { useForm } from 'react-hook-form';
@@ -8,11 +8,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMaterialQuery } from '../hooks/useMaterialQuery';
 import { MaterialQueryForm, DirectMaterial, IndirectMaterial } from '../types/types';
 import { MaterialQueryFormSchema } from '../types/schemas';
+import { SearchOutlined } from '@ant-design/icons';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import './material-query.css';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
 export const MaterialQuery: React.FC = () => {
@@ -32,30 +33,57 @@ export const MaterialQuery: React.FC = () => {
 
   // Direct Materials Grid Columns
   const directMaterialColumns: ColDef<DirectMaterial>[] = [
-    { field: 'name', headerName: 'Name', filter: true, sortable: true },
-    { field: 'type', headerName: 'Type', filter: true, sortable: true },
-    { field: 'grade', headerName: 'Grade', filter: true, sortable: true },
-    { field: 'color', headerName: 'Color', filter: true, sortable: true },
-    { field: 'weight', headerName: 'Weight', filter: 'agNumberColumnFilter', sortable: true },
-    { field: 'volume', headerName: 'Volume', filter: 'agNumberColumnFilter', sortable: true },
+    { field: 'name', headerName: 'Name', filter: true, sortable: true, minWidth: 150 },
+    { field: 'type', headerName: 'Type', filter: true, sortable: true, minWidth: 120 },
+    { field: 'grade', headerName: 'Grade', filter: true, sortable: true, minWidth: 120 },
+    { field: 'color', headerName: 'Color', filter: true, sortable: true, minWidth: 120 },
+    { field: 'weight', headerName: 'Weight', filter: 'agNumberColumnFilter', sortable: true, minWidth: 120, valueFormatter: params => `${params.value.toFixed(2)} kg` },
+    { field: 'volume', headerName: 'Volume', filter: 'agNumberColumnFilter', sortable: true, minWidth: 120, valueFormatter: params => `${params.value.toFixed(2)} m³` },
   ];
 
   // Indirect Materials Grid Columns
   const indirectMaterialColumns: ColDef<IndirectMaterial>[] = [
-    { field: 'name', headerName: 'Name', filter: true, sortable: true },
-    { field: 'category', headerName: 'Category', filter: true, sortable: true },
-    { field: 'modelNumber', headerName: 'Model Number', filter: true, sortable: true },
-    { field: 'costCenterCode', headerName: 'Cost Center Code', filter: true, sortable: true },
-    { field: 'unitCost', headerName: 'Unit Cost', filter: 'agNumberColumnFilter', sortable: true },
+    { field: 'name', headerName: 'Name', filter: true, sortable: true, minWidth: 150 },
+    { field: 'category', headerName: 'Category', filter: true, sortable: true, minWidth: 150 },
+    { field: 'modelNumber', headerName: 'Model Number', filter: true, sortable: true, minWidth: 150 },
+    { field: 'costCenterCode', headerName: 'Cost Center Code', filter: true, sortable: true, minWidth: 150 },
+    { field: 'unitCost', headerName: 'Unit Cost', filter: 'agNumberColumnFilter', sortable: true, minWidth: 120, valueFormatter: params => `$${params.value.toFixed(2)}` },
   ];
+
+  const renderEmptyState = (type: string) => (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={
+        <span>
+          No {type} Materials Found. {state.equipmentId ? 
+            <span>Try a different Equipment ID.</span> : 
+            <span>Enter an Equipment ID to search for materials.</span>}
+        </span>
+      }
+    />
+  );
+
+  const loadingOverlay = `
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+      <div class="ant-spin ant-spin-lg ant-spin-spinning">
+        <span class="ant-spin-dot">
+          <i class="ant-spin-dot-item"></i>
+          <i class="ant-spin-dot-item"></i>
+          <i class="ant-spin-dot-item"></i>
+          <i class="ant-spin-dot-item"></i>
+        </span>
+      </div>
+      <div style="margin-top: 16px; font-size: 14px; color: rgba(0,0,0,0.65);">Loading materials data...</div>
+    </div>
+  `;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mx-auto max-w-7xl">
         <Title level={2} className="mb-6">Material Query</Title>
         
-        {/* Query Form - Using only React Hook Form */}
-        <Card className="mb-6 shadow-sm material-card">
+        {/* Query Form */}
+        <Card className="mb-6 shadow-sm material-card" title={<span className="font-medium text-lg">Search by Equipment ID</span>}>
           <form onSubmit={handleSubmit(handleSearch)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -64,7 +92,7 @@ export const MaterialQuery: React.FC = () => {
               <input
                 {...register('equipmentId')}
                 type="text"
-                placeholder="Enter Equipment ID"
+                placeholder="Enter Equipment ID (e.g., EQP-1234)"
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   errors.equipmentId ? 'border-red-500' : 'border-gray-300'
                 }`}
@@ -78,42 +106,95 @@ export const MaterialQuery: React.FC = () => {
               htmlType="submit" 
               loading={isLoading}
               disabled={!isValid}
+              icon={<SearchOutlined />}
             >
-              Search
+              Search Materials
             </Button>
           </form>
         </Card>
 
         {/* Error Display */}
         {error && (
-          <div className="mb-4 text-red-500">{error}</div>
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+            <Text strong className="block mb-1">Error Occurred</Text>
+            <Text>{error}</Text>
+            <div className="mt-2">
+              <Text>Please try again or contact support if the issue persists.</Text>
+            </div>
+          </div>
+        )}
+
+        {/* Summary Cards */}
+        {state.equipmentId && !isLoading && !error && (
+          <Row gutter={16} className="mb-6">
+            <Col span={12}>
+              <Card className="shadow-sm material-card">
+                <Statistic
+                  title="Direct Materials"
+                  value={state.directMaterials.length}
+                  suffix="items"
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card className="shadow-sm material-card">
+                <Statistic
+                  title="Indirect Materials"
+                  value={state.indirectMaterials.length}
+                  suffix="items"
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+          </Row>
         )}
 
         {/* Tabbed Material Display */}
-        <Card className="shadow-sm material-card">
+        <Card className="shadow-sm material-card" title={<span className="font-medium text-lg">Material Results</span>}>
           <Tabs activeKey={state.activeTab} onChange={(key) => setActiveTab(key as 'direct' | 'indirect')}>
             <TabPane tab="Direct Materials" key="direct">
               <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
-                <AgGridReact<DirectMaterial>
-                  rowData={state.directMaterials}
-                  columnDefs={directMaterialColumns}
-                  pagination={true}
-                  paginationPageSize={10}
-                  animateRows={true}
-                  loading={isLoading}
-                />
+                {isLoading ? (
+                  <Spin tip="Loading materials..." size="large" style={{ marginTop: 100 }}>
+                    <div style={{ height: 300 }} />
+                  </Spin>
+                ) : state.directMaterials.length === 0 ? (
+                  renderEmptyState("Direct")
+                ) : (
+                  <AgGridReact<DirectMaterial>
+                    rowData={state.directMaterials}
+                    columnDefs={directMaterialColumns}
+                    pagination={true}
+                    paginationPageSize={10}
+                    animateRows={true}
+                    loading={isLoading}
+                    overlayLoadingTemplate={loadingOverlay}
+                    overlayNoRowsTemplate={renderEmptyState("Direct").toString()}
+                  />
+                )}
               </div>
             </TabPane>
             <TabPane tab="Indirect Materials" key="indirect">
               <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
-                <AgGridReact<IndirectMaterial>
-                  rowData={state.indirectMaterials}
-                  columnDefs={indirectMaterialColumns}
-                  pagination={true}
-                  paginationPageSize={10}
-                  animateRows={true}
-                  loading={isLoading}
-                />
+                {isLoading ? (
+                  <Spin tip="Loading materials..." size="large" style={{ marginTop: 100 }}>
+                    <div style={{ height: 300 }} />
+                  </Spin>
+                ) : state.indirectMaterials.length === 0 ? (
+                  renderEmptyState("Indirect")
+                ) : (
+                  <AgGridReact<IndirectMaterial>
+                    rowData={state.indirectMaterials}
+                    columnDefs={indirectMaterialColumns}
+                    pagination={true}
+                    paginationPageSize={10}
+                    animateRows={true}
+                    loading={isLoading}
+                    overlayLoadingTemplate={loadingOverlay}
+                    overlayNoRowsTemplate={renderEmptyState("Indirect").toString()}
+                  />
+                )}
               </div>
             </TabPane>
           </Tabs>
