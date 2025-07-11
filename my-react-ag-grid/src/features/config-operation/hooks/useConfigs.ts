@@ -2,8 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { useCallback } from 'react';
-import { ConfigApiResponse, ConfigSaveRequest, QueryFormData, SourcePartConfig } from '../types/types';
+import { useCallback, useState } from 'react';
+import {
+  ConfigApiResponse,
+  ConfigSaveRequest,
+  QueryFormData,
+  SourcePartConfig,
+} from '../types/types';
 
 // API functions
 const fetchConfigs = async (sourcePart: string): Promise<SourcePartConfig[]> => {
@@ -69,14 +74,18 @@ const validateSaveData = (configs: SourcePartConfig[]): { isValid: boolean; erro
   return { isValid: true };
 };
 
-export const useConfigs = () => {
+export const useConfigs = (initialSourcePart?: string) => {
   const queryClient = useQueryClient();
+  const [currentSourcePart, setCurrentSourcePart] = useState<string>(initialSourcePart || '');
 
-  // Query for fetching configs
+  // Query for fetching configs based on current source part
   const configQuery = useQuery({
-    queryKey: ['configs'],
-    queryFn: () => Promise.resolve([]), // Empty initially
-    enabled: false, // Only fetch when explicitly called
+    queryKey: ['configs', currentSourcePart],
+    queryFn: () => fetchConfigs(currentSourcePart),
+    enabled: !!currentSourcePart.trim(), // Only fetch when sourcePart exists and is not empty
+    // retry: 2,
+    // staleTime: 5 * 60 * 1000, // 5 minutes
+    // cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Mutation for saving configs
@@ -84,8 +93,8 @@ export const useConfigs = () => {
     mutationFn: saveConfigs,
     onSuccess: () => {
       message.success('Configurations saved successfully');
-      // Invalidate and refetch queries
-      queryClient.invalidateQueries({ queryKey: ['configs'] });
+      // Invalidate and refetch the current configs
+      queryClient.invalidateQueries({ queryKey: ['configs', currentSourcePart] });
     },
     onError: (error: Error) => {
       message.error(`Save failed: ${error.message}`);
@@ -100,10 +109,15 @@ export const useConfigs = () => {
       }
 
       try {
-        const configs = await fetchConfigs(formData.sourcePart);
+        // Update the current source part to trigger the query
+        setCurrentSourcePart(formData.sourcePart);
 
-        // Update query cache
-        queryClient.setQueryData(['configs', formData.sourcePart], configs);
+        // Use fetchQuery to get fresh data and update loading state
+        const configs = await queryClient.fetchQuery({
+          queryKey: ['configs', formData.sourcePart],
+          queryFn: () => fetchConfigs(formData.sourcePart),
+          staleTime: 5 * 60 * 1000,
+        });
 
         return configs;
       } catch (error) {
@@ -136,46 +150,90 @@ export const useConfigs = () => {
     [saveMutation]
   );
 
-  // Refetch configs for a specific source part
+  // Refetch configs for current source part
   const refetchConfigs = useCallback(
     async (sourcePart?: string) => {
-      if (!sourcePart) {
+      const targetSourcePart = sourcePart || currentSourcePart;
+      
+      if (!targetSourcePart.trim()) {
         return;
       }
 
       try {
-        const configs = await fetchConfigs(sourcePart);
-        queryClient.setQueryData(['configs', sourcePart], configs);
+        // Update current source part if different
+        if (sourcePart && sourcePart !== currentSourcePart) {
+          setCurrentSourcePart(sourcePart);
+        }
+
+        // Use fetchQuery to refetch and update loading state
+        const configs = await queryClient.fetchQuery({
+          queryKey: ['configs', targetSourcePart],
+          queryFn: () => fetchConfigs(targetSourcePart),
+          staleTime: 0, // Force fresh data
+        });
+
         return configs;
       } catch (error) {
         message.error('Failed to refresh data');
         throw error;
       }
     },
-    [queryClient]
+    [queryClient, currentSourcePart]
   );
 
-  // Get cached configs
+  // Get cached configs for specific source part
   const getCachedConfigs = useCallback(
-    (sourcePart: string): SourcePartConfig[] | undefined => {
-      return queryClient.getQueryData(['configs', sourcePart]);
+    (sourcePart?: string): SourcePartConfig[] | undefined => {
+      const targetSourcePart = sourcePart || currentSourcePart;
+      return queryClient.getQueryData(['configs', targetSourcePart]);
     },
-    [queryClient]
+    [queryClient, currentSourcePart]
   );
 
   // Clear configs cache
   const clearConfigsCache = useCallback(() => {
     queryClient.removeQueries({ queryKey: ['configs'] });
+    setCurrentSourcePart('');
   }, [queryClient]);
 
+  // Clear specific source part cache
+  const clearSourcePartCache = useCallback(
+    (sourcePart?: string) => {
+      const targetSourcePart = sourcePart || currentSourcePart;
+      queryClient.removeQueries({ queryKey: ['configs', targetSourcePart] });
+      
+      // If clearing current source part, reset it
+      if (targetSourcePart === currentSourcePart) {
+        setCurrentSourcePart('');
+      }
+    },
+    [queryClient, currentSourcePart]
+  );
+
+  // Switch to different source part
+  const switchSourcePart = useCallback(
+    (sourcePart: string) => {
+      setCurrentSourcePart(sourcePart);
+    },
+    []
+  );
+
   return {
-    // Query state
+    // Query state - now properly reflects loading/error states
     isLoading: configQuery.isLoading,
     error: configQuery.error,
+    data: configQuery.data,
+    isFetching: configQuery.isFetching,
+    isSuccess: configQuery.isSuccess,
+    isError: configQuery.isError,
 
     // Mutation state
     isSaving: saveMutation.isPending,
     saveError: saveMutation.error,
+    saveSuccess: saveMutation.isSuccess,
+
+    // Current state
+    currentSourcePart,
 
     // Actions
     fetchConfigsBySourcePart,
@@ -183,6 +241,8 @@ export const useConfigs = () => {
     refetchConfigs,
     getCachedConfigs,
     clearConfigsCache,
+    clearSourcePartCache,
+    switchSourcePart,
 
     // Raw query and mutation objects for advanced usage
     configQuery,

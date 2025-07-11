@@ -1,6 +1,6 @@
 // src/features/material-query/store/materialReducer.ts
 import { match } from 'ts-pattern';
-import { MaterialQueryState, MaterialQueryAction } from '../types/types';
+import { MaterialQueryAction, MaterialQueryState } from '../types/types';
 
 const initialState: MaterialQueryState = {
   directMaterials: [],
@@ -12,7 +12,10 @@ const initialState: MaterialQueryState = {
   lastUpdated: undefined,
 };
 
-export const materialReducer = (state: MaterialQueryState = initialState, action: MaterialQueryAction): MaterialQueryState => {
+export const materialReducer = (
+  state: MaterialQueryState = initialState,
+  action: MaterialQueryAction
+): MaterialQueryState => {
   return match(action)
     .with({ type: 'SET_LOADING' }, ({ payload }) => ({
       ...state,

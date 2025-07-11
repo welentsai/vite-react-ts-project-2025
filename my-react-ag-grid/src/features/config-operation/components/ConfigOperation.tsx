@@ -23,9 +23,9 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { AgGridReact } from 'ag-grid-react';
 import { Button, Card, Form, Input, Modal, Space, Typography, Upload } from 'antd';
 import React, { useCallback, useMemo } from 'react';
-import './ag-grid-custom.css';
 import { useConfigOperation } from '../hooks/hook';
 import { QueryFormData, SourcePartConfig } from '../types/types';
+import './ag-grid-custom.css';
 
 const { Title } = Typography;
 

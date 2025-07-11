@@ -6,12 +6,9 @@ export const materialQueryHandlers = [
   http.get('https://abc.example.com/api/configs', ({ request }) => {
     const url = new URL(request.url);
     const equipmentId = url.searchParams.get('equipmentId');
-    
+
     if (!equipmentId) {
-      return HttpResponse.json(
-        { error: 'Equipment ID is required' },
-        { status: 400 }
-      );
+      return HttpResponse.json({ error: 'Equipment ID is required' }, { status: 400 });
     }
 
     const mockResponse: MaterialResponse = {
@@ -24,7 +21,7 @@ export const materialQueryHandlers = [
             grade: 'A36',
             color: 'Gray',
             weight: 100,
-            volume: 0.5
+            volume: 0.5,
           },
           {
             id: 'DM2',
@@ -33,7 +30,7 @@ export const materialQueryHandlers = [
             grade: '6061',
             color: 'Silver',
             weight: 50,
-            volume: 0.3
+            volume: 0.3,
           },
           {
             id: 'DM3',
@@ -42,8 +39,8 @@ export const materialQueryHandlers = [
             grade: 'C110',
             color: 'Copper',
             weight: 10,
-            volume: 0.1
-          }
+            volume: 0.1,
+          },
         ],
         indirectMaterials: [
           {
@@ -52,7 +49,7 @@ export const materialQueryHandlers = [
             category: 'Consumable',
             modelNumber: 'LUB-100',
             costCenterCode: 'CC-001',
-            unitCost: 25.5
+            unitCost: 25.5,
           },
           {
             id: 'IM2',
@@ -60,7 +57,7 @@ export const materialQueryHandlers = [
             category: 'Consumable',
             modelNumber: 'SOL-200',
             costCenterCode: 'CC-002',
-            unitCost: 15.75
+            unitCost: 15.75,
           },
           {
             id: 'IM3',
@@ -68,15 +65,12 @@ export const materialQueryHandlers = [
             category: 'PPE',
             modelNumber: 'GLV-300',
             costCenterCode: 'CC-003',
-            unitCost: 8.99
-          }
-        ]
-      }
+            unitCost: 8.99,
+          },
+        ],
+      },
     };
 
-    return HttpResponse.json(
-      mockResponse,
-      { status: 200 }
-    );
+    return HttpResponse.json(mockResponse, { status: 200 });
   }),
 ];

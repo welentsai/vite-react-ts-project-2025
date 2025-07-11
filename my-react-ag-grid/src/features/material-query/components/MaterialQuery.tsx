@@ -1,16 +1,16 @@
 // src/features/material-query/components/MaterialQuery.tsx
-import React from 'react';
-import { Button, Card, Tabs, Typography, Statistic, Row, Col, Empty, Spin } from 'antd';
-import { AgGridReact } from 'ag-grid-react';
-import { ColDef } from 'ag-grid-community';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMaterialQuery } from '../hooks/useMaterialQuery';
-import { MaterialQueryForm, DirectMaterial, IndirectMaterial } from '../types/types';
-import { MaterialQueryFormSchema } from '../types/schemas';
 import { SearchOutlined } from '@ant-design/icons';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ColDef } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { AgGridReact } from 'ag-grid-react';
+import { Button, Card, Empty, Spin, Tabs, Typography } from 'antd';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { useMaterialQuery } from '../hooks/useMaterialQuery';
+import { MaterialQueryFormSchema } from '../types/schemas';
+import { DirectMaterial, IndirectMaterial, MaterialQueryForm } from '../types/types';
 import './material-query.css';
 
 const { Title, Text } = Typography;
@@ -27,8 +27,8 @@ export const MaterialQuery: React.FC = () => {
     resolver: zodResolver(MaterialQueryFormSchema),
     mode: 'onChange',
     defaultValues: {
-      equipmentId: '' // Ensure default value is provided
-    }
+      equipmentId: '', // Ensure default value is provided
+    },
   });
 
   // Direct Materials Grid Columns
@@ -37,17 +37,50 @@ export const MaterialQuery: React.FC = () => {
     { field: 'type', headerName: 'Type', filter: true, sortable: true, minWidth: 120 },
     { field: 'grade', headerName: 'Grade', filter: true, sortable: true, minWidth: 120 },
     { field: 'color', headerName: 'Color', filter: true, sortable: true, minWidth: 120 },
-    { field: 'weight', headerName: 'Weight', filter: 'agNumberColumnFilter', sortable: true, minWidth: 120, valueFormatter: params => `${params.value.toFixed(2)} kg` },
-    { field: 'volume', headerName: 'Volume', filter: 'agNumberColumnFilter', sortable: true, minWidth: 120, valueFormatter: params => `${params.value.toFixed(2)} m³` },
+    {
+      field: 'weight',
+      headerName: 'Weight',
+      filter: 'agNumberColumnFilter',
+      sortable: true,
+      minWidth: 120,
+      valueFormatter: params => `${params.value.toFixed(2)} kg`,
+    },
+    {
+      field: 'volume',
+      headerName: 'Volume',
+      filter: 'agNumberColumnFilter',
+      sortable: true,
+      minWidth: 120,
+      valueFormatter: params => `${params.value.toFixed(2)} m³`,
+    },
   ];
 
   // Indirect Materials Grid Columns
   const indirectMaterialColumns: ColDef<IndirectMaterial>[] = [
     { field: 'name', headerName: 'Name', filter: true, sortable: true, minWidth: 150 },
     { field: 'category', headerName: 'Category', filter: true, sortable: true, minWidth: 150 },
-    { field: 'modelNumber', headerName: 'Model Number', filter: true, sortable: true, minWidth: 150 },
-    { field: 'costCenterCode', headerName: 'Cost Center Code', filter: true, sortable: true, minWidth: 150 },
-    { field: 'unitCost', headerName: 'Unit Cost', filter: 'agNumberColumnFilter', sortable: true, minWidth: 120, valueFormatter: params => `$${params.value.toFixed(2)}` },
+    {
+      field: 'modelNumber',
+      headerName: 'Model Number',
+      filter: true,
+      sortable: true,
+      minWidth: 150,
+    },
+    {
+      field: 'costCenterCode',
+      headerName: 'Cost Center Code',
+      filter: true,
+      sortable: true,
+      minWidth: 150,
+    },
+    {
+      field: 'unitCost',
+      headerName: 'Unit Cost',
+      filter: 'agNumberColumnFilter',
+      sortable: true,
+      minWidth: 120,
+      valueFormatter: params => `$${params.value.toFixed(2)}`,
+    },
   ];
 
   const renderEmptyState = (type: string) => (
@@ -55,9 +88,12 @@ export const MaterialQuery: React.FC = () => {
       image={Empty.PRESENTED_IMAGE_SIMPLE}
       description={
         <span>
-          No {type} Materials Found. {state.equipmentId ? 
-            <span>Try a different Equipment ID.</span> : 
-            <span>Enter an Equipment ID to search for materials.</span>}
+          No {type} Materials Found.{' '}
+          {state.equipmentId ? (
+            <span>Try a different Equipment ID.</span>
+          ) : (
+            <span>Enter an Equipment ID to search for materials.</span>
+          )}
         </span>
       }
     />
@@ -80,15 +116,18 @@ export const MaterialQuery: React.FC = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mx-auto max-w-7xl">
-        <Title level={2} className="mb-6">Material Query</Title>
-        
+        <Title level={2} className="mb-6">
+          Material Query
+        </Title>
+
         {/* Query Form */}
-        <Card className="mb-6 shadow-sm material-card" title={<span className="font-medium text-lg">Search by Equipment ID</span>}>
+        <Card
+          className="mb-6 shadow-sm material-card"
+          title={<span className="font-medium text-lg">Search by Equipment ID</span>}
+        >
           <form onSubmit={handleSubmit(handleSearch)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Equipment ID
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Equipment ID</label>
               <input
                 {...register('equipmentId')}
                 type="text"
@@ -101,9 +140,9 @@ export const MaterialQuery: React.FC = () => {
                 <p className="mt-1 text-sm text-red-600">{errors.equipmentId.message}</p>
               )}
             </div>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
+            <Button
+              type="primary"
+              htmlType="submit"
               loading={isLoading}
               disabled={!isValid}
               icon={<SearchOutlined />}
@@ -116,7 +155,9 @@ export const MaterialQuery: React.FC = () => {
         {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
-            <Text strong className="block mb-1">Error Occurred</Text>
+            <Text strong className="block mb-1">
+              Error Occurred
+            </Text>
             <Text>{error}</Text>
             <div className="mt-2">
               <Text>Please try again or contact support if the issue persists.</Text>
@@ -124,35 +165,15 @@ export const MaterialQuery: React.FC = () => {
           </div>
         )}
 
-        {/* Summary Cards */}
-        {state.equipmentId && !isLoading && !error && (
-          <Row gutter={16} className="mb-6">
-            <Col span={12}>
-              <Card className="shadow-sm material-card">
-                <Statistic
-                  title="Direct Materials"
-                  value={state.directMaterials.length}
-                  suffix="items"
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-            <Col span={12}>
-              <Card className="shadow-sm material-card">
-                <Statistic
-                  title="Indirect Materials"
-                  value={state.indirectMaterials.length}
-                  suffix="items"
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-          </Row>
-        )}
-
         {/* Tabbed Material Display */}
-        <Card className="shadow-sm material-card" title={<span className="font-medium text-lg">Material Results</span>}>
-          <Tabs activeKey={state.activeTab} onChange={(key) => setActiveTab(key as 'direct' | 'indirect')}>
+        <Card
+          className="shadow-sm results-card"
+          title={<span className="font-medium text-lg">Material Results</span>}
+        >
+          <Tabs
+            activeKey={state.activeTab}
+            onChange={key => setActiveTab(key as 'direct' | 'indirect')}
+          >
             <TabPane tab="Direct Materials" key="direct">
               <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
                 {isLoading ? (
@@ -160,7 +181,7 @@ export const MaterialQuery: React.FC = () => {
                     <div style={{ height: 300 }} />
                   </Spin>
                 ) : state.directMaterials.length === 0 ? (
-                  renderEmptyState("Direct")
+                  renderEmptyState('Direct')
                 ) : (
                   <AgGridReact<DirectMaterial>
                     rowData={state.directMaterials}
@@ -170,7 +191,7 @@ export const MaterialQuery: React.FC = () => {
                     animateRows={true}
                     loading={isLoading}
                     overlayLoadingTemplate={loadingOverlay}
-                    overlayNoRowsTemplate={renderEmptyState("Direct").toString()}
+                    overlayNoRowsTemplate={renderEmptyState('Direct').toString()}
                   />
                 )}
               </div>
@@ -182,7 +203,7 @@ export const MaterialQuery: React.FC = () => {
                     <div style={{ height: 300 }} />
                   </Spin>
                 ) : state.indirectMaterials.length === 0 ? (
-                  renderEmptyState("Indirect")
+                  renderEmptyState('Indirect')
                 ) : (
                   <AgGridReact<IndirectMaterial>
                     rowData={state.indirectMaterials}
@@ -192,7 +213,7 @@ export const MaterialQuery: React.FC = () => {
                     animateRows={true}
                     loading={isLoading}
                     overlayLoadingTemplate={loadingOverlay}
-                    overlayNoRowsTemplate={renderEmptyState("Indirect").toString()}
+                    overlayNoRowsTemplate={renderEmptyState('Indirect').toString()}
                   />
                 )}
               </div>

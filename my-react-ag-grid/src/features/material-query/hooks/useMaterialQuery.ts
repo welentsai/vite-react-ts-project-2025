@@ -1,8 +1,8 @@
 // src/features/material-query/hooks/useMaterialQuery.ts
-import { useReducer, useCallback } from 'react';
-import { useMaterials } from './useMaterials';
+import { useCallback, useReducer } from 'react';
 import { materialReducer } from '../store/materialReducer';
-import { MaterialQueryState, MaterialQueryForm } from '../types/types';
+import { MaterialQueryForm, MaterialQueryState } from '../types/types';
+import { useMaterials } from './useMaterials';
 
 const initialState: MaterialQueryState = {
   directMaterials: [],
@@ -40,10 +40,13 @@ export const useMaterialQuery = () => {
   }
 
   // Handle form submission
-  const handleSearch = useCallback((formData: MaterialQueryForm) => {
-    dispatch({ type: 'SET_EQUIPMENT_ID', payload: formData.equipmentId });
-    refetch();
-  }, [refetch]);
+  const handleSearch = useCallback(
+    (formData: MaterialQueryForm) => {
+      dispatch({ type: 'SET_EQUIPMENT_ID', payload: formData.equipmentId });
+      refetch();
+    },
+    [refetch]
+  );
 
   // Handle tab change
   const setActiveTab = useCallback((tab: 'direct' | 'indirect') => {

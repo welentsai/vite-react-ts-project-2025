@@ -1,5 +1,5 @@
 // src/features/material-query/types/schemas.ts
-import * as z from "zod/v4";
+import * as z from 'zod/v4';
 
 // Base Material Schema (common fields)
 const BaseItemSchema = z.object({
@@ -35,31 +35,39 @@ export const MaterialResponseSchema = z.object({
     directMaterials: z.array(DirectMaterialSchema),
     indirectMaterials: z.array(IndirectMaterialSchema),
   }),
-  meta: z.object({
-    equipmentId: z.string(),
-    timestamp: z.string().datetime(),
-    totalDirectMaterials: z.number().optional(),
-    totalIndirectMaterials: z.number().optional(),
-  }).optional(),
-  links: z.object({
-    self: z.string().url().optional(),
-    related: z.string().url().optional(),
-  }).optional(),
+  meta: z
+    .object({
+      equipmentId: z.string(),
+      timestamp: z.string().datetime(),
+      totalDirectMaterials: z.number().optional(),
+      totalIndirectMaterials: z.number().optional(),
+    })
+    .optional(),
+  links: z
+    .object({
+      self: z.string().url().optional(),
+      related: z.string().url().optional(),
+    })
+    .optional(),
 });
 
 // Error Response Schema (JSON:API compliant)
 export const MaterialErrorResponseSchema = z.object({
-  errors: z.array(z.object({
-    id: z.string().optional(),
-    status: z.string(),
-    code: z.string(),
-    title: z.string(),
-    detail: z.string().optional(),
-    source: z.object({
-      pointer: z.string().optional(),
-      parameter: z.string().optional(),
-    }).optional(),
-  })),
+  errors: z.array(
+    z.object({
+      id: z.string().optional(),
+      status: z.string(),
+      code: z.string(),
+      title: z.string(),
+      detail: z.string().optional(),
+      source: z
+        .object({
+          pointer: z.string().optional(),
+          parameter: z.string().optional(),
+        })
+        .optional(),
+    })
+  ),
 });
 
 // State Schema for validation

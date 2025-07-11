@@ -1,8 +1,6 @@
 /* src/features/material-query/components/material-query.css */
 .material-card {
-  border-radius: 8px;
-  border: 1px solid #e8e8e8;
-  transition: box-shadow 0.3s ease;
+  border-radius: 0px;
 }
 
 .material-card:hover {
@@ -11,6 +9,10 @@
 
 .material-card .ant-card-body {
   padding: 24px;
+}
+
+.results-card .ant-card-body {
+  padding: 12px 24px;
 }
 
 .ant-tabs-nav {

@@ -1,8 +1,8 @@
 // src/features/material-query/hooks/useMaterials.ts
 import { useQuery } from '@tanstack/react-query';
 import { materialService } from '../services/material.service';
-import { MaterialResponse } from '../types/types';
 import { MaterialQueryFormSchema } from '../types/schemas';
+import { MaterialResponse } from '../types/types';
 
 export const useMaterials = (equipmentId?: string) => {
   return useQuery({
@@ -14,9 +14,9 @@ export const useMaterials = (equipmentId?: string) => {
 
       // Validate input with Zod
       const validatedInput = MaterialQueryFormSchema.parse({ equipmentId });
-      
+
       return materialService.getMaterialsByEquipmentId({
-        equipmentId: validatedInput.equipmentId
+        equipmentId: validatedInput.equipmentId,
       });
     },
     enabled: !!equipmentId,

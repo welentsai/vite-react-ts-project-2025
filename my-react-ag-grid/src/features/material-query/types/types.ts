@@ -1,12 +1,12 @@
 // src/features/material-query/types/types.ts
-import type * as z from "zod/v4";
+import type * as z from 'zod/v4';
 import {
   DirectMaterialSchema,
   IndirectMaterialSchema,
-  MaterialQueryFormSchema,
-  MaterialResponseSchema,
   MaterialErrorResponseSchema,
+  MaterialQueryFormSchema,
   MaterialQueryStateSchema,
+  MaterialResponseSchema,
 } from './schemas';
 
 // Inferred Types from Schemas
@@ -41,7 +41,7 @@ export interface MaterialGridProps<T extends Material> {
 }
 
 // Action types for reducer (with Zod validation)
-export type MaterialQueryAction = 
+export type MaterialQueryAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_MATERIALS'; payload: MaterialResponse['data'] }
   | { type: 'SET_ERROR'; payload: string | null }

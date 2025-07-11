@@ -1,8 +1,8 @@
 // src/features/material-query/services/material.service.ts
 import axios, { AxiosResponse } from 'axios';
 import { MaterialQueryFormSchema, MaterialResponseSchema } from '../types/schemas';
-import { MaterialResponse, GetMaterialsRequest } from '../types/types';
-import { transformApiResponse, parseApiError } from '../utils/validation';
+import { GetMaterialsRequest, MaterialResponse } from '../types/types';
+import { parseApiError, transformApiResponse } from '../utils/validation';
 
 class MaterialService {
   private api = axios.create({
@@ -10,7 +10,7 @@ class MaterialService {
     timeout: 10000,
     headers: {
       'Content-Type': 'application/vnd.api+json',
-      'Accept': 'application/vnd.api+json',
+      Accept: 'application/vnd.api+json',
     },
   });
 
@@ -18,15 +18,15 @@ class MaterialService {
     try {
       // Validate input
       const validatedRequest = MaterialQueryFormSchema.parse({ equipmentId: request.equipmentId });
-      
+
       // Make API call
       const response: AxiosResponse = await this.api.get('/configs', {
-        params: { equipmentId: validatedRequest.equipmentId }
+        params: { equipmentId: validatedRequest.equipmentId },
       });
 
       // Validate and transform response
       const validatedData = transformApiResponse(response.data);
-      
+
       if (!validatedData) {
         throw new Error('Invalid response format from server');
       }
@@ -43,7 +43,9 @@ class MaterialService {
     try {
       // Validate each direct material
       data.directMaterials.forEach(material => {
-        const result = MaterialResponseSchema.safeParse({ data: { directMaterials: [material], indirectMaterials: [] } });
+        const result = MaterialResponseSchema.safeParse({
+          data: { directMaterials: [material], indirectMaterials: [] },
+        });
         if (!result.success) {
           throw new Error(`Invalid direct material: ${parseApiError(result.error)}`);
         }
@@ -51,7 +53,9 @@ class MaterialService {
 
       // Validate each indirect material
       data.indirectMaterials.forEach(material => {
-        const result = MaterialResponseSchema.safeParse({ data: { directMaterials: [], indirectMaterials: [material] } });
+        const result = MaterialResponseSchema.safeParse({
+          data: { directMaterials: [], indirectMaterials: [material] },
+        });
         if (!result.success) {
           throw new Error(`Invalid indirect material: ${parseApiError(result.error)}`);
         }

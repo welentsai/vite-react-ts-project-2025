@@ -16,8 +16,14 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { AllCommunityModule, ModuleRegistry, provideGlobalGridOptions } from 'ag-grid-community';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ConfigOperation from './features/config-operation/components/ConfigOperation';
 import { MaterialQuery } from './features/material-query';
+import { DataGrid } from './components/DataGrid';
+import { DataGridWithSheetJS } from './components/DataGridWithSheetJs';
+import { AppGroupedGrid } from './components/AppGroupedGrid';
+import AppThree from './components/AppThree/component';
+import { CustomDataGrid } from './components/CustomDataGrid';
+import { CustomGroupingGrid } from './components/GroupedDataGrid';
+import ConfigOperation from './features/config-operation';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -41,20 +47,9 @@ enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        {/* <ConfigOperation /> */}
-        <MaterialQuery />
+        <ConfigOperation />
+        {/* <MaterialQuery /> */}
       </QueryClientProvider>
     </StrictMode>
-
-    // <StrictMode>
-    //   <ConfigOperation />
-    //   {/* <DataGrid /> */}
-    //   {/* <DataGridWithSheetJS /> */}
-    //   {/* <AppGroupedGrid /> */}
-    //   {/* <AppThree /> */}
-    //   {/* <AppTwo /> */}
-    //   {/* <Layout>
-    //   </Layout> */}
-    // </StrictMode>
   );
 });
